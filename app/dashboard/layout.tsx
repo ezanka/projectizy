@@ -17,7 +17,9 @@ export default async function LogedLayout({
     return (
         <main className="flex min-h-screen flex-col bg-sidebar text-foreground">
             <Header />
-            {children}
+            <main className="flex flex-1 flex-col max-w-6xl mx-auto w-full p-8">
+                {children}
+            </main>
         </main>
     )
 }
