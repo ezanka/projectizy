@@ -19,6 +19,8 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+  members      Member[]
+  invitations  Invitation[]
 
   @@unique([email])
   @@map("user")
@@ -67,4 +69,59 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+enum type {
+    free
+    business
+    school
+    personal
+}
+
+enum status {
+    active
+    inactive
+    suspended
+}
+
+model Organization {
+    id          String       @id @default(cuid())
+    name        String
+    slug        String?
+    logo        String?
+    type        type        @default(free)
+    createdAt   DateTime    @default(now())
+    metadata    String?
+    status      status       @default(active)
+    members     Member[]
+    invitations Invitation[]
+
+    @@unique([slug])
+    @@map("organization")
+}
+
+model Member {
+    id             String       @id @default(cuid())
+    organizationId String
+    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    userId         String
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role           String
+    createdAt      DateTime     @default(now())
+
+    @@map("member")
+}
+
+model Invitation {
+    id             String       @id @default(cuid())
+    organizationId String
+    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    email          String
+    role           String?
+    status         String
+    expiresAt      DateTime
+    inviterId      String
+    user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+    @@map("invitation")
 }

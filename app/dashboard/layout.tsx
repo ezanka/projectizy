@@ -1,6 +1,6 @@
 import { getUser } from "@/src/lib/auth-server";
 import { redirect } from "next/navigation";
-import { ThemeToggle } from "@/src/components/ui/global/themeToggle";
+import Header from "@/src/components/layout/global/header";
 
 export default async function LogedLayout({
     children,
@@ -12,12 +12,12 @@ export default async function LogedLayout({
 
     if (!user) {
         redirect('/');
-    }
+    } 
 
     return (
-        <main>
+        <main className="flex min-h-screen flex-col bg-sidebar text-foreground">
+            <Header />
             {children}
-            <ThemeToggle />
         </main>
     )
 }
