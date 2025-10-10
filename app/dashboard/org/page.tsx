@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { Workspace } from "@/src/types/workspace"
 import { Skeleton } from "@/src/components/ui/shadcn/skeleton";
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/src/components/ui/shadcn/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/shadcn/card";
 import Link from "next/link";
 
 export default function OrgPage() {
@@ -27,7 +27,7 @@ export default function OrgPage() {
     }, [])
 
     return (
-        <div className="">
+        <div>
             <h1 className="text-2xl font-bold mb-4">Listes des organisations</h1>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {loading ? (

@@ -16,7 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/src/components/ui/shadcn/dropdown-menu"
-import { ChevronsUpDown, Folders, Plus, SearchIcon } from "lucide-react"
+import { Check, ChevronsUpDown, Folders, Plus, SearchIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -103,10 +103,10 @@ export default function HeaderPath() {
                                     ) : (
                                         <div className="flex items-center gap-2">                                      
                                             {currentWorkspace?.name}
-                                            {currentWorkspace?.type === "personal" && <p className="bg-sidebar/90 text-foreground text-xs px-1 py-0.5 border rounded-full">Personnel</p>}
-                                            {currentWorkspace?.type === "business" && <p className="bg-sidebar/90 text-foreground text-xs px-1 py-0.5 border rounded-full">Entreprise</p>}
+                                            {currentWorkspace?.type === "personal" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Personnel</p>}
+                                            {currentWorkspace?.type === "business" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Entreprise</p>}
                                             {currentWorkspace?.type === "school" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">École</p>}
-                                            {currentWorkspace?.type === "free" && <p className="bg-sidebar/90 text-foreground text-xs px-1 py-0.5 border rounded-full">Gratuit</p>}
+                                            {currentWorkspace?.type === "free" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Gratuit</p>}
                                         </div>
                                     )}
                                 </BreadcrumbPage>
@@ -126,7 +126,7 @@ export default function HeaderPath() {
                                         <DropdownMenuSeparator />
                                         {workspaces.map((w) => (
                                             <DropdownMenuItem key={w.id} asChild>
-                                                <Link href={`/dashboard/org/${w.slug}`}>{w.name}</Link>
+                                                <Link href={`/dashboard/org/${w.slug}`} className={`${w.id === currentWorkspace?.id ? "bg-accent text-accent-foreground" : ""} my-1 flex items-center justify-between hover:cursor-pointer`}>{w.name}{w.id === currentWorkspace?.id ? <Check className="w-4 h-4 ml-2" /> : null}</Link>
                                             </DropdownMenuItem>
                                         ))}
                                         <DropdownMenuSeparator />

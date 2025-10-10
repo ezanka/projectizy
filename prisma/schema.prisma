@@ -21,6 +21,7 @@ model User {
   accounts      Account[]
   members      Member[]
   invitations  Invitation[]
+  projects     Project[]
 
   @@unique([email])
   @@map("user")
@@ -95,6 +96,7 @@ model Organization {
     status      status       @default(active)
     members     Member[]
     invitations Invitation[]
+    projects    Project[]
 
     @@unique([slug])
     @@map("organization")
@@ -124,4 +126,62 @@ model Invitation {
     user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
 
     @@map("invitation")
+}
+
+enum projectStatus {
+    TODO
+    inProgress
+    done
+}
+
+enum ProjectVisibility {
+    private
+    organization
+    public
+}
+
+enum ProjectPriority {
+    low
+    medium
+    high
+}
+
+model Project {
+    id           String           @id @default(cuid())
+    workspaceId  String
+    workspace    Organization        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+    name         String
+    slug         String
+    description  String?
+    visibility   ProjectVisibility @default(private)
+    startDate    DateTime?
+    dueDate      DateTime?
+    category     String?
+    priority     ProjectPriority?
+    coverImage   String?
+    templateId   String?
+
+    metadata     String?
+    createdAt    DateTime         @default(now())
+    updatedAt    DateTime         @default(now()) @updatedAt
+
+    userId       String
+    user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    status       projectStatus    @default(TODO)
+
+    tags         Tag[]
+
+    @@unique([workspaceId, slug])
+
+    @@map("project")
+}
+model Tag {
+    id        String   @id @default(cuid())
+    name      String
+    projectId String
+    project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@index([projectId])
 }
