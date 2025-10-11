@@ -1,10 +1,9 @@
 import { getUser } from "@/src/lib/auth-server";
 import { redirect } from "next/navigation";
-import Header from "@/src/components/layout/global/header";
-import { SidebarProvider } from "@/src/components/ui/shadcn/sidebar";
+import { OrgSidebar } from "@/src/components/layout/global/sidebar/org-sidebar";
 import { cookies } from "next/headers"
 
-export default async function LogedLayout({
+export default async function OrgLayout({
     children,
 }: Readonly<{
     children: React.ReactNode;
@@ -20,11 +19,13 @@ export default async function LogedLayout({
     } 
 
     return (
-        <SidebarProvider defaultOpen={defaultOpen}>              
-            <div className="flex min-h-screen w-full flex-col bg-sidebar text-foreground">
-                <Header />
-                {children}
-            </div>
-        </SidebarProvider>
+
+                <main className="flex flex-1 flex-col max-w-6xl mx-auto w-full p-8">
+                    <OrgSidebar />
+                    <div className="ml-10">
+                        {children}
+                    </div>
+                </main>
+
     )
 }

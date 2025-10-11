@@ -51,7 +51,7 @@ export function SignInForm() {
                 password: values.password,
             }, {
                 onSuccess: () => {
-                    router.push("/dashboard/org");
+                    router.push("/dashboard/organizations");
                     router.refresh();
                 },
                 onError: (error) => {
@@ -67,7 +67,7 @@ export function SignInForm() {
     const handleLoginWithGoogle = async () => {
         await authClient.signIn.social({
             provider: "google",
-            callbackURL: "/dashboard/org",
+            callbackURL: "/dashboard/organizations",
         })
     }
 

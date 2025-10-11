@@ -1,7 +1,7 @@
 "use client"
 
+import { Calendar, Search, Settings, ChevronsRight, Folders, Users } from "lucide-react"
 import { useState } from "react"
-import { Calendar, Home, Inbox, Search, Settings, ChevronsLeft, ChevronsRight } from "lucide-react"
 import {
     Sidebar,
     SidebarContent,
@@ -11,64 +11,62 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
+    useSidebar
 } from "@/src/components/ui/shadcn/sidebar"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
-const cx = (...cls: (string | false | null | undefined)[]) => cls.filter(Boolean).join(" ")
 
-const items = [
-    { title: "Home", url: "#", icon: Home },
-    { title: "Inbox", url: "#", icon: Inbox },
-    { title: "Calendar", url: "#", icon: Calendar },
-    { title: "Search", url: "#", icon: Search },
-    { title: "Settings", url: "#", icon: Settings },
-]
+function splitPathname(pathname: string) {
+    const parts = pathname.split('/');
+    return parts.length > 3 ? parts[3] : null;
+}
 
 export function OrgSidebar() {
-    const [isCollapsed, setIsCollapsed] = useState(false)
+    const { toggleSidebar, state, setOpen } = useSidebar()
+    const pathname = usePathname()
+    const [isHovered, setIsHovered] = useState(false)
+    const actualPath = splitPathname(pathname || "")
+
+    const items = [
+        { title: "Projets", url: `/dashboard/org/${actualPath}`, icon: Folders },
+        { title: "Equipe", url: `/dashboard/org/${actualPath}/teams`, icon: Users },
+        { title: "Calendrier", url: `/dashboard/org/${actualPath}/calendar`, icon: Calendar },
+        { title: "Paramètres", url: `/dashboard/org/${actualPath}/settings`, icon: Settings },
+    ]
+
+
+    const handleMouseEnter = () => {
+        setIsHovered(true)
+        if (state === "collapsed") {
+            setOpen(true)
+        }
+    }
+
+    const handleMouseLeave = () => {
+        setIsHovered(false)
+        if (state === "expanded" && isHovered) {
+            setOpen(false)
+        }
+    }
 
     return (
         <Sidebar
-            data-collapsed={isCollapsed}
-            className={cx(
-                "transition-[width] duration-300 ease-in-out",
-                "w-64",
-                isCollapsed && "w-12" 
-            )}
+            collapsible="icon"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            className="z-5"
         >
-            <SidebarContent
-                className={cx(
-                    "flex flex-col h-full mt-16",
-                    isCollapsed && "items-center" 
-                )}
-            >
+            <SidebarContent className="mt-16">
                 <SidebarGroup>
                     <SidebarGroupContent>
-                        <SidebarMenu className={cx(isCollapsed && "flex flex-col items-center gap-4")}>
+                        <SidebarMenu className="flex flex-col space-y-1">
                             {items.map((item) => (
                                 <SidebarMenuItem key={item.title}>
-                                    <SidebarMenuButton
-                                        asChild
-                                        className={cx(
-                                            "flex items-center rounded-md",
-                                            isCollapsed ? "justify-end" : "justify-start",
-                                            "h-fit w-full",
-                                            "transition-colors"
-                                        )}
-                                    >
+                                    <SidebarMenuButton asChild>
                                         <Link href={item.url} title={item.title} aria-label={item.title}>
-                                            <item.icon className="h-5 w-5 shrink-0" />
-                                            <span
-                                                className={cx(
-                                                    "truncate",
-                                                    "transition-all duration-200",
-                                                    isCollapsed
-                                                        ? "opacity-0 max-w-0 overflow-hidden"
-                                                        : "opacity-100 max-w-[180px]"
-                                                )}
-                                            >
-                                                {item.title}
-                                            </span>
+                                            <item.icon />
+                                            <span>{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>
@@ -78,23 +76,13 @@ export function OrgSidebar() {
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter
-                className={cx(
-                    "flex items-center justify-center py-2 border-t border-border"
-                )}
-            >
+            <SidebarFooter className="py-2">
                 <button
                     type="button"
-                    onClick={() => setIsCollapsed((v) => !v)}
-                    className={cx(
-                        "inline-flex justify-center items-center ",
-                        "h-8 w-8 rounded-md border",
-                        "transition-colors hover:bg-muted"
-                    )}
-                    aria-label={isCollapsed ? "Déplier la barre latérale" : "Replier la barre latérale"}
-                    title={isCollapsed ? "Déplier" : "Replier"}
+                    onClick={toggleSidebar}
+                    className="inline-flex justify-center items-center h-8 w-8 rounded-md border transition-colors hover:bg-muted"
                 >
-                    {isCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+                    <ChevronsRight className={`h-4 w-4 transition-transform ${state === "collapsed" ? '' : 'rotate-180'}`} />
                 </button>
             </SidebarFooter>
         </Sidebar>

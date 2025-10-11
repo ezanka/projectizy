@@ -72,11 +72,16 @@ model Verification {
   @@map("verification")
 }
 
-enum type {
-    free
-    business
-    school
+enum OrganizationType {
     personal
+    education
+    company
+    other
+}
+
+enum OrganizationPlan {
+    free
+    pro
 }
 
 enum status {
@@ -90,7 +95,8 @@ model Organization {
     name        String
     slug        String?
     logo        String?
-    type        type        @default(free)
+    type        OrganizationType        @default(personal)
+    plan       OrganizationPlan        @default(free)
     createdAt   DateTime    @default(now())
     metadata    String?
     status      status       @default(active)

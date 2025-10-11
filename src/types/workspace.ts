@@ -1,6 +1,7 @@
 
 
-export type WorkspaceType = "school" | "personal" | "business" | "free";
+export type WorkspaceType = "personal" | "education" | "company" | "other";
+export type WorkspacePlan = "free" | "pro";
 
 export type Workspace = {
     id: string;
@@ -9,4 +10,5 @@ export type Workspace = {
     createdAt: string;
     updatedAt: string;
     type: WorkspaceType;
+    plan: WorkspacePlan;
 }

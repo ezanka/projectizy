@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -16,7 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/src/components/ui/shadcn/dropdown-menu"
-import { Check, ChevronsUpDown, Folders, Plus, SearchIcon } from "lucide-react"
+import { Check, ChevronsUpDown, Plus, SearchIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
@@ -28,16 +28,107 @@ import { Skeleton } from "@/src/components/ui/shadcn/skeleton"
 import { Workspace } from "@/src/types/workspace"
 import Image from "next/image"
 
+interface BreadcrumbConfig {
+    pattern: RegExp
+    getItems: (pathname: string, workspace?: Workspace | null) => BreadcrumbItemConfig[]
+}
+
+interface BreadcrumbItemConfig {
+    path?: string
+    label: string | React.ReactNode
+    isCurrentPage?: boolean
+    showWorkspaceSelector?: boolean
+}
+
 export default function HeaderPath() {
     const pathname = usePathname()
-    const isOrgRoot = pathname === "/dashboard/org"
-    const slugMatch = pathname.match(/^\/dashboard\/org\/([^/]+)$/)
-    const isOrgDetail = Boolean(slugMatch)
-    const currentSlug = slugMatch?.[1]
-
     const [workspaces, setWorkspaces] = useState<Workspace[]>([])
     const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null)
     const [loading, setLoading] = useState(true)
+
+    const breadcrumbConfig: BreadcrumbConfig[] = [
+        {
+            pattern: /^\/dashboard\/org\/([^/]+)$/,
+            getItems: (pathname, workspace) => [
+                { path: "/dashboard/organizations", label: "Organisations" },
+                {
+                    label: workspace ? (
+                        <div className="flex items-center gap-2">
+                            {workspace.name}
+                            {workspace.type === "personal" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Personnel</span>}
+                            {workspace.type === "company" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Entreprise</span>}
+                            {workspace.type === "education" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Éducation</span>}
+                            {workspace.type === "other" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Autre</span>}
+                        </div>
+                    ) : <Skeleton className="w-20 h-5" />,
+                    isCurrentPage: true,
+                    showWorkspaceSelector: true
+                }
+            ]
+        },
+        {
+            pattern: /^\/dashboard\/org\/([^/]+)\/teams$/,
+            getItems: (pathname, workspace) => [
+                { path: "/dashboard/organizations", label: "Organisations" },
+                {
+                    label: workspace ? (
+                        <div className="flex items-center gap-2">
+                            {workspace.name}
+                            {workspace.type === "personal" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Personnel</span>}
+                            {workspace.type === "company" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Entreprise</span>}
+                            {workspace.type === "education" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Éducation</span>}
+                            {workspace.type === "other" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Autre</span>}
+                        </div>
+                    ) : <Skeleton className="w-20 h-5" />,
+                    isCurrentPage: true,
+                    showWorkspaceSelector: true
+                },
+            ]
+        },
+        {
+            pattern: /^\/dashboard\/org\/([^/]+)\/calendar$/,
+            getItems: (pathname, workspace) => [
+                { path: "/dashboard/organizations", label: "Organisations" },
+                {
+                    label: workspace ? (
+                        <div className="flex items-center gap-2">
+                            {workspace.name}
+                            {workspace.type === "personal" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Personnel</span>}
+                            {workspace.type === "company" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Entreprise</span>}
+                            {workspace.type === "education" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Éducation</span>}
+                            {workspace.type === "other" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Autre</span>}
+                        </div>
+                    ) : <Skeleton className="w-20 h-5" />,
+                    isCurrentPage: true,
+                    showWorkspaceSelector: true
+                },
+            ]
+        },
+        {
+            pattern: /^\/dashboard\/org\/([^/]+)\/settings$/,
+            getItems: (pathname, workspace) => [
+                { path: "/dashboard/organizations", label: "Organisations" },
+                {
+                    label: workspace ? (
+                        <div className="flex items-center gap-2">
+                            {workspace.name}
+                            {workspace.type === "personal" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Personnel</span>}
+                            {workspace.type === "company" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Entreprise</span>}
+                            {workspace.type === "education" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Éducation</span>}
+                            {workspace.type === "other" && <span className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Autre</span>}
+                        </div>
+                    ) : <Skeleton className="w-20 h-5" />,
+                    isCurrentPage: true,
+                    showWorkspaceSelector: true
+                },
+            ]
+        },
+    ]
+
+    const currentSlug = useMemo(() => {
+        const match = pathname.match(/^\/dashboard\/org\/([^/]+)/)
+        return match?.[1]
+    }, [pathname])
 
     useEffect(() => {
         setLoading(true)
@@ -60,12 +151,18 @@ export default function HeaderPath() {
         fetchWorkspaces()
     }, [currentSlug])
 
+    const breadcrumbItems = useMemo(() => {
+        const config = breadcrumbConfig.find(c => c.pattern.test(pathname))
+        if (!config) return []
+        return config.getItems(pathname, currentWorkspace)
+    }, [pathname, currentWorkspace, breadcrumbConfig])
+
     return (
         <Breadcrumb>
             <BreadcrumbList>
                 <BreadcrumbItem>
                     <BreadcrumbLink asChild>
-                        <Link href={"/dashboard/org"} className="flex items-center">
+                        <Link href="/dashboard/organizations" className="flex items-center">
                             <Image
                                 src="/logo-crop.png"
                                 alt="Logo"
@@ -76,75 +173,74 @@ export default function HeaderPath() {
                         </Link>
                     </BreadcrumbLink>
                 </BreadcrumbItem>
-                <BreadcrumbSeparator />
-                {isOrgRoot && (
-                    <>
-                        <BreadcrumbPage>
-                            <BreadcrumbLink asChild>
-                                <Link
-                                    href="/dashboard/org"
-                                    className="flex items-center gap-2 transition"
-                                >
-                                    Organisations
-                                </Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbPage>
-                    </>
-                )} 
 
+                {breadcrumbItems.map((item, index) => (
+                    <div key={index} className="flex items-center">
+                        <BreadcrumbSeparator />
+                        <BreadcrumbItem className="ml-2">
+                            {item.isCurrentPage ? (
+                                <div className="flex items-center gap-2 ml-2">
+                                    <BreadcrumbPage>
+                                        {item.path ? (
+                                            <BreadcrumbLink asChild>
+                                                <Link href={item.path} className="flex items-center gap-2 transition">
+                                                    {item.label}
+                                                </Link>
+                                            </BreadcrumbLink>
+                                        ) : (
+                                            item.label
+                                        )}
+                                    </BreadcrumbPage>
 
-                {isOrgDetail && (
-                    <>
-                        <BreadcrumbItem>
-                            <div className="flex items-center gap-2">
-                                <BreadcrumbPage>
-                                    {loading ? (
-                                        <Skeleton className="w-20 h-5" />
-                                    ) : (
-                                        <div className="flex items-center gap-2">                                      
-                                            {currentWorkspace?.name}
-                                            {currentWorkspace?.type === "personal" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Personnel</p>}
-                                            {currentWorkspace?.type === "business" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Entreprise</p>}
-                                            {currentWorkspace?.type === "school" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">École</p>}
-                                            {currentWorkspace?.type === "free" && <p className="bg-sidebar/90 text-foreground text-xs px-2 py-0.5 border rounded-full">Gratuit</p>}
-                                        </div>
+                                    {item.showWorkspaceSelector && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger className="flex items-center gap-1 hover:bg-accent hover:text-accent-foreground rounded-md px-2 py-1 text-sm font-medium transition">
+                                                <ChevronsUpDown className="w-4 h-4" />
+                                                <span className="sr-only">Changer d'organisation</span>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="start">
+                                                <InputGroup className="border-none">
+                                                    <InputGroupInput placeholder="Search..." />
+                                                    <InputGroupAddon>
+                                                        <SearchIcon />
+                                                    </InputGroupAddon>
+                                                </InputGroup>
+                                                <DropdownMenuSeparator />
+                                                {workspaces.map((w) => (
+                                                    <DropdownMenuItem key={w.id} asChild>
+                                                        <Link
+                                                            href={`/dashboard/org/${w.slug}`}
+                                                            className={`${w.id === currentWorkspace?.id ? "bg-accent text-accent-foreground" : ""} my-1 flex items-center justify-between hover:cursor-pointer`}
+                                                        >
+                                                            {w.name}
+                                                            {w.id === currentWorkspace?.id ? <Check className="w-4 h-4 ml-2" /> : null}
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                ))}
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/dashboard/org">Toutes les Organisations</Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem asChild>
+                                                    <Link href="/dashboard/organizations/new">
+                                                        <Plus className="w-4 h-4 mr-1" /> Nouvelle Organisation
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     )}
-                                </BreadcrumbPage>
-
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger className="flex items-center gap-1 hover:bg-accent hover:text-accent-foreground rounded-md px-2 py-1 text-sm font-medium transition">
-                                        <ChevronsUpDown className="w-4 h-4" />
-                                        <span className="sr-only">Changer d’organisation</span>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start">
-                                        <InputGroup className="border-none">
-                                            <InputGroupInput placeholder="Search..." />
-                                            <InputGroupAddon>
-                                                <SearchIcon />
-                                            </InputGroupAddon>
-                                        </InputGroup>
-                                        <DropdownMenuSeparator />
-                                        {workspaces.map((w) => (
-                                            <DropdownMenuItem key={w.id} asChild>
-                                                <Link href={`/dashboard/org/${w.slug}`} className={`${w.id === currentWorkspace?.id ? "bg-accent text-accent-foreground" : ""} my-1 flex items-center justify-between hover:cursor-pointer`}>{w.name}{w.id === currentWorkspace?.id ? <Check className="w-4 h-4 ml-2" /> : null}</Link>
-                                            </DropdownMenuItem>
-                                        ))}
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem asChild>
-                                            <Link href="/dashboard/org">Toutes les Organisations</Link>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem asChild>
-                                            <Link href="/dashboard/org/new">
-                                                <Plus className="w-4 h-4 mr-1" /> Nouvelle Organisation
-                                            </Link>
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
-                        </BreadcrumbItem>                       
-                    </>
-                )}
+                                </div>
+                            ) : (
+                                <BreadcrumbLink asChild>
+                                    <Link href={item.path!} className="flex items-center gap-2 transition">
+                                        {item.label}
+                                    </Link>
+                                </BreadcrumbLink>
+                            )}
+                        </BreadcrumbItem>
+                    </div>
+                ))}
             </BreadcrumbList>
         </Breadcrumb>
     )
