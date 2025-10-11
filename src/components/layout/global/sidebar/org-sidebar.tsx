@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, Search, Settings, ChevronsRight, Folders, Users } from "lucide-react"
+import { Calendar, Settings, ChevronsRight, Folders, Users } from "lucide-react"
 import { useState } from "react"
 import {
     Sidebar,

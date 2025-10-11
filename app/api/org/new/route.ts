@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
-import { randomUUID } from "crypto";
 import { getUser } from "@/src/lib/auth-server";
 
 export async function POST(req: Request) {

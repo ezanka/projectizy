@@ -46,7 +46,7 @@ export default function OrgPage() {
                             <Link href={`/dashboard/org/${workspace.slug}`} className="block">
                                 <CardHeader>
                                     <CardTitle className="text-md">{workspace.name}</CardTitle>
-                                    <CardDescription>{workspace.type} plan - 0 projet</CardDescription>
+                                    <CardDescription>{workspace.type} - 0 projet</CardDescription>
                                 </CardHeader>
                             </Link>
                         </Card>

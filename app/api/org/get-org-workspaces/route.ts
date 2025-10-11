@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
 
-export async function GET(
-    req: Request
-) {
+export async function GET() {
     const user = await getUser();
     
     if (!user) {

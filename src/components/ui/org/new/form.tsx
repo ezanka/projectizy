@@ -4,8 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 
-import { authClient } from "@/src/lib/auth-client"
-
 import {
     Form,
     FormControl,
@@ -159,13 +157,13 @@ export function NewOrganizationForm() {
                     </CardContent>
                     <CardFooter className="flex items-center justify-between">
                         <Button type="submit" variant={"outline"}>
-                            <Link href="/dashboard/org/">
+                            <Link href="/dashboard/organizations">
                                 Annuler
                             </Link>
                         </Button>
                         <Button type="submit" disabled={isLoading}>
                             {isLoading && <Spinner />}
-                            Créer l'organisation
+                            Créer l&apos;organisation
                         </Button>
                     </CardFooter>
                 </form>

@@ -4,14 +4,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
 
-type Params = { id: string };
+type Params = { organisationSlug: string };
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<Params> }
 ) {
     const user = await getUser();
-    const { id } = await params; 
+    const { organisationSlug } = await params; 
 
     if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -19,7 +19,7 @@ export async function GET(
 
     const project = await prisma.organization.findFirst({
         where: {
-            slug: id,
+            slug: organisationSlug,
             members: {
                 some: {
                     userId: user.id
