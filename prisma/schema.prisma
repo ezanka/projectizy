@@ -140,12 +140,6 @@ enum projectStatus {
     done
 }
 
-enum ProjectVisibility {
-    private
-    organization
-    public
-}
-
 enum ProjectPriority {
     low
     medium
@@ -154,21 +148,17 @@ enum ProjectPriority {
 
 model Project {
     id           String           @id @default(cuid())
-    workspaceId  String
-    workspace    Organization        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+    workspaceSlug  String
+    workspace    Organization        @relation(fields: [workspaceSlug], references: [slug], onDelete: Cascade)
 
     name         String
     slug         String
     description  String?
-    visibility   ProjectVisibility @default(private)
     startDate    DateTime?
     dueDate      DateTime?
-    category     String?
     priority     ProjectPriority?
     coverImage   String?
-    templateId   String?
 
-    metadata     String?
     createdAt    DateTime         @default(now())
     updatedAt    DateTime         @default(now()) @updatedAt
 
@@ -179,7 +169,7 @@ model Project {
 
     tags         Tag[]
 
-    @@unique([workspaceId, slug])
+    @@unique([workspaceSlug, slug])
 
     @@map("project")
 }
