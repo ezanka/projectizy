@@ -1,13 +1,9 @@
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
 
-type Params = { organisationSlug: string };
-
-export async function GET(
-    req: NextRequest,
-) {
+export async function GET() {
     const user = await getUser();
 
     if (!user) {

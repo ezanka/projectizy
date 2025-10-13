@@ -32,7 +32,7 @@ export default function Notifications() {
 
             if (res.ok) toast.success("Invitation refusée");
         } catch (error) {
-            toast.error("Erreur réseau lors du rejet de l'invitation");
+            toast.error("Erreur réseau lors du rejet de l'invitation : " + String(error));
         }
     }
 
@@ -46,7 +46,7 @@ export default function Notifications() {
 
             if (res.ok) toast.success("Invitation acceptée");
         } catch (error) {
-            toast.error("Erreur réseau lors de l'acceptation de l'invitation");
+            toast.error("Erreur réseau lors de l'acceptation de l'invitation : " + String(error));
         }
     }
 
@@ -62,7 +62,7 @@ export default function Notifications() {
                         <div key={notification.id}>
                             <div>
                                 <p className="max-w-50">
-                                    <span className="font-bold">{notification.email}</span> vous invite à rejoindre l'organisation suivante :
+                                    <span className="font-bold">{notification.email}</span> vous invite à rejoindre l&apos;organisation suivante :
                                 </p>
                                 {notification.organization && (
                                     <ul>

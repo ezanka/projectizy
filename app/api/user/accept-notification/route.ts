@@ -16,7 +16,7 @@ export async function PATCH(req: Request) {
             return NextResponse.json({ error: "Des champs sont manquants" }, { status: 400 });
         }
 
-        const notification = await prisma.invitation.updateMany({
+        await prisma.invitation.updateMany({
             where: {
                 id,
             },
@@ -43,7 +43,7 @@ export async function PATCH(req: Request) {
             },
         });
 
-        return NextResponse.json(notification, { status: 200 });
+        return NextResponse.json(addUserToOrganization, { status: 200 });
     } catch {
         return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }

@@ -155,7 +155,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                             <BadgeCheck />
                             <div>
                                 <div className="font-semibold">Invitation envoyée</div>
-                                <div className="text-sm opacity-90">L'invitation a été envoyée avec succès.</div>
+                                <div className="text-sm opacity-90">L&apos;invitation a été envoyée avec succès.</div>
                             </div>
                         </div>
                     </div>
@@ -167,7 +167,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                         <div className="flex items-center gap-2">
                             <BadgeX />
                             <div>
-                                <div className="font-semibold">Erreur lors de l'envoi de l'invitation</div>
+                                <div className="font-semibold">Erreur lors de l&apos;envoi de l&apos;invitation</div>
                                 <div className="text-sm opacity-90">{errorData.error}</div>
                             </div>
                         </div>
@@ -248,7 +248,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                             <DialogHeader>
                                 <DialogTitle>Inviter un membre</DialogTitle>
                                 <DialogDescription>
-                                    Entrez l'adresse e-mail du membre que vous souhaitez inviter.
+                                    Entrez l&apos;adresse e-mail du membre que vous souhaitez inviter.
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4">
