@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/src/components/ui/shadcn/dropdown-menu"
 import SignOut from "../../ui/global/signOut";
-import { Settings } from "lucide-react";
+import { Inbox, Settings } from "lucide-react";
 import Link from "next/link";
 
 export default async function Header() {
@@ -35,6 +35,15 @@ export default async function Header() {
                     <HeaderPath />
                 </div>
                 <div className="flex items-center">
+                    <div className="rounded-full border mr-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Inbox className="h-3 w-3 m-2 text-muted-foreground hover:text-foreground cursor-pointer" /></DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger>
                             <Avatar>
