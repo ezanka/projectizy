@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/src/components/ui/shadcn/button"
@@ -22,9 +22,6 @@ import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/src/components/ui/shadcn/dropdown-menu"
 import { Input } from "@/src/components/ui/shadcn/input"
@@ -36,6 +33,8 @@ import {
     TableHeader,
     TableRow,
 } from "@/src/components/ui/shadcn/table"
+import { ButtonGroup } from "@/src/components/ui/shadcn/button-group"
+import Link from "next/link"
 
 export type Project = {
     id: string
@@ -156,7 +155,7 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
 
     return (
         <div className="w-full">
-            <div className="flex items-center py-4">
+            <div className="flex items-center py-4 justify-between">
                 <Input
                     placeholder="Filtrer par nom..."
                     value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -165,32 +164,47 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                     }
                     className="max-w-sm"
                 />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                            Colonnes <ChevronDown />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        {table
-                            .getAllColumns()
-                            .filter((column) => column.getCanHide())
-                            .map((column) => {
-                                return (
-                                    <DropdownMenuCheckboxItem
-                                        key={column.id}
-                                        className="capitalize"
-                                        checked={column.getIsVisible()}
-                                        onCheckedChange={(value) =>
-                                            column.toggleVisibility(!!value)
-                                        }
-                                    >
-                                        {column.id}
-                                    </DropdownMenuCheckboxItem>
-                                )
-                            })}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                <ButtonGroup>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="ml-auto">
+                                Colonnes <ChevronDown />
+                            </Button>
+
+
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            {table
+                                .getAllColumns()
+                                .filter((column) => column.getCanHide())
+                                .map((column) => {
+                                    return (
+                                        <DropdownMenuCheckboxItem
+                                            key={column.id}
+                                            className="capitalize"
+                                            checked={column.getIsVisible()}
+                                            onCheckedChange={(value) =>
+                                                column.toggleVisibility(!!value)
+                                            }
+                                        >
+                                            {column.id}
+                                        </DropdownMenuCheckboxItem>
+                                    )
+                                })}
+                        </DropdownMenuContent>
+                    </DropdownMenu>                            
+                    <Button
+                        variant="outline"
+                        className="border-l-0 rounded-l-none"
+                        asChild
+                    >
+                        <Link href={`/dashboard/new/${organizationSlug}`}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Nouveau projet
+                        </Link>
+
+                    </Button>
+                </ButtonGroup>
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
@@ -222,14 +236,14 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                                         className="hover:cursor-pointer"
                                         onClick={() => router.push(`/dashboard/org/${organizationSlug}/project/${row.original.slug}`)}
                                     >
-                                            {row.getVisibleCells().map((cell) => (
-                                                <TableCell key={cell.id}>
-                                                    {flexRender(
-                                                        cell.column.columnDef.cell,
-                                                        cell.getContext()
-                                                    )}
-                                                </TableCell>
-                                            ))}
+                                        {row.getVisibleCells().map((cell) => (
+                                            <TableCell key={cell.id}>
+                                                {flexRender(
+                                                    cell.column.columnDef.cell,
+                                                    cell.getContext()
+                                                )}
+                                            </TableCell>
+                                        ))}
                                     </TableRow>
                                 ))
                             ) : (

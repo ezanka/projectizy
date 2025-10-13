@@ -75,7 +75,6 @@ const getProjectLabel = (project: Project | null) => {
 
 const getBreadcrumbConfig = (workspace: Workspace | null, project: Project | null): BreadcrumbConfig[] => [
     {
-        // Toutes les routes avec un projet (doit être testé en premier)
         pattern: /^\/dashboard\/org\/([^/]+)\/project\/([^/]+)/,
         getItems: (pathname) => {
             const slug = pathname.match(/^\/dashboard\/org\/([^/]+)/)?.[1]
@@ -85,8 +84,8 @@ const getBreadcrumbConfig = (workspace: Workspace | null, project: Project | nul
                     label: getWorkspaceLabel(workspace),
                     showWorkspaceSelector: true
                 },
-                { 
-                    label: getProjectLabel(project), 
+                {
+                    label: getProjectLabel(project),
                     isCurrentPage: true,
                     showProjectSelector: true
                 }
@@ -94,7 +93,19 @@ const getBreadcrumbConfig = (workspace: Workspace | null, project: Project | nul
         }
     },
     {
-        // Toutes les routes du workspace sans projet
+        pattern: /^\/dashboard\/new\/([^/]+)/,
+        getItems: (pathname) => [
+
+
+                {
+                    path: `/dashboard/org/${pathname.match(/^\/dashboard\/new\/([^/]+)/)?.[1]}`,
+                    label: getWorkspaceLabel(workspace),
+                    showWorkspaceSelector: true
+                },
+
+        ]
+    },
+    {
         pattern: /^\/dashboard\/org\/([^/]+)/,
         getItems: () => [
             {
@@ -115,7 +126,10 @@ export default function HeaderPath() {
     const [projectSearchQuery, setProjectSearchQuery] = useState("")
 
     const currentSlug = useMemo(() => {
-        const match = pathname.match(/^\/dashboard\/org\/([^/]+)/)
+        let match = pathname.match(/^\/dashboard\/org\/([^/]+)/)
+        if (match) return match[1]
+
+        match = pathname.match(/^\/dashboard\/new\/([^/]+)/)
         return match?.[1]
     }, [pathname])
 
@@ -154,7 +168,7 @@ export default function HeaderPath() {
                 const res = await fetch(`/api/org/${currentSlug}/get-org-project`)
                 const data: Project[] = await res.json()
                 setProjects(data)
-                
+
                 if (currentProjectSlug) {
                     setCurrentProject(data.find(p => p.slug === currentProjectSlug) || null)
                 } else {
@@ -170,7 +184,7 @@ export default function HeaderPath() {
 
     const filteredProjects = useMemo(() => {
         if (!projectSearchQuery) return projects
-        return projects.filter(p => 
+        return projects.filter(p =>
             p.name.toLowerCase().includes(projectSearchQuery.toLowerCase())
         )
     }, [projects, projectSearchQuery])
@@ -262,8 +276,8 @@ export default function HeaderPath() {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="start">
                                             <InputGroup className="border-none">
-                                                <InputGroupInput 
-                                                    placeholder="Rechercher..." 
+                                                <InputGroupInput
+                                                    placeholder="Rechercher..."
                                                     value={projectSearchQuery}
                                                     onChange={(e) => setProjectSearchQuery(e.target.value)}
                                                 />
@@ -295,7 +309,7 @@ export default function HeaderPath() {
                                             </DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                             <DropdownMenuItem asChild>
-                                                <Link href={`/dashboard/org/${currentSlug}/project/new`}>
+                                                <Link href={`/dashboard/new/${currentSlug}`}>
                                                     <Plus className="w-4 h-4 mr-1" /> Nouveau Projet
                                                 </Link>
                                             </DropdownMenuItem>
