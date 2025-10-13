@@ -5,6 +5,7 @@ export type UserBase = {
   image: string | null;
   createdAt: Date;
   updatedAt: Date;
+  role?: string;
 };
 
 
