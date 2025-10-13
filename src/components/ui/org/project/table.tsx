@@ -14,6 +14,7 @@ import {
     VisibilityState,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
@@ -102,35 +103,6 @@ export const columns: ColumnDef<Project>[] = [
         header: () => <div className="text-left">Description</div>,
         cell: ({ row }) => <div className="lowercase">{row.getValue("description")}</div>,
     },
-    {
-        id: "actions",
-        enableHiding: false,
-        cell: ({ row }) => {
-            const payment = row.original
-
-            return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(payment.id)}
-                        >
-                            Copy payment ID
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View customer</DropdownMenuItem>
-                        <DropdownMenuItem>View payment details</DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )
-        },
-    },
 ]
 
 export function ProjectTable({ organizationSlug }: { organizationSlug: string }) {
@@ -143,6 +115,7 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
     const [rowSelection, setRowSelection] = React.useState({})
     const [data, setData] = React.useState<Project[]>([])
     const [loading, setLoading] = React.useState(true)
+    const router = useRouter();
 
     React.useEffect(() => {
 
@@ -246,15 +219,17 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                                     <TableRow
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
+                                        className="hover:cursor-pointer"
+                                        onClick={() => router.push(`/dashboard/org/${organizationSlug}/project/${row.original.slug}`)}
                                     >
-                                        {row.getVisibleCells().map((cell) => (
-                                            <TableCell key={cell.id}>
-                                                {flexRender(
-                                                    cell.column.columnDef.cell,
-                                                    cell.getContext()
-                                                )}
-                                            </TableCell>
-                                        ))}
+                                            {row.getVisibleCells().map((cell) => (
+                                                <TableCell key={cell.id}>
+                                                    {flexRender(
+                                                        cell.column.columnDef.cell,
+                                                        cell.getContext()
+                                                    )}
+                                                </TableCell>
+                                            ))}
                                     </TableRow>
                                 ))
                             ) : (
@@ -283,7 +258,7 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
             <div className="flex items-center justify-end space-x-2 py-4">
                 <div className="text-muted-foreground flex-1 text-sm">
                     {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} row(s) selected.
+                    {table.getFilteredRowModel().rows.length} ligne(s) sélectionnée(s).
                 </div>
                 <div className="space-x-2">
                     <Button
@@ -292,7 +267,7 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
-                        Previous
+                        Précédent
                     </Button>
                     <Button
                         variant="outline"
@@ -300,7 +275,7 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
-                        Next
+                        Suivant
                     </Button>
                 </div>
             </div>
