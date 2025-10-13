@@ -1,14 +1,72 @@
 import { ThemeToggle } from "../../ui/global/themeToggle";
+import { Avatar, AvatarImage, AvatarFallback } from "../../ui/shadcn/avatar";
 import HeaderPath from "./header-path";
+import { getUser } from "@/src/lib/auth-server";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/src/components/ui/shadcn/dropdown-menu"
+import SignOut from "../../ui/global/signOut";
+import { Settings } from "lucide-react";
+import Link from "next/link";
 
-export default function Header() {
+export default async function Header() {
+    const user = await getUser();
+
+    if (!user) {
+        return null;
+    }
+
+    const logout = async () => {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+        });
+        window.location.href = '/';
+    }
+
     return (
         <header className="w-full border-b bg-sidebar z-10">
             <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
                 <div className="flex flex-1 items-center justify-between">
                     <HeaderPath />
                 </div>
-                <ThemeToggle />
+                <div className="flex items-center">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger>
+                            <Avatar>
+                                <AvatarImage src={user?.image || ""} alt={user?.name || ""} />
+                                <AvatarFallback>{user?.name ? user.name.charAt(0) : "U"}</AvatarFallback>
+                            </Avatar>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-xs">
+                            <DropdownMenuLabel>
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{user?.name}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <Link href={`/dashboard/settings`} title="Paramètres" aria-label="Paramètres" className="flex items-center cursor-pointer">
+                                    <Settings />
+                                    <span>Paramètres</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuLabel>Thème</DropdownMenuLabel>
+                            <ThemeToggle />
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                                <SignOut />
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                </div>
             </div>
         </header>
     );

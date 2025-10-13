@@ -1,40 +1,37 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun } from "lucide-react"
 import { useTheme } from "next-themes"
-
-import { Button } from "@/src/components/ui/shadcn/button"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/src/components/ui/shadcn/dropdown-menu"
+import { DropdownMenuItem } from "@/src/components/ui/shadcn/dropdown-menu"
+import { Check } from "lucide-react"
 
 export function ThemeToggle() {
-    const { setTheme } = useTheme()
+    const { theme, setTheme } = useTheme()
+
+    const items = [
+        { value: "light", label: "Light" },
+        { value: "dark", label: "Dark" },
+        { value: "system", label: "System" },
+    ]
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                    <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                    <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setTheme("light")}>
-                Light
+        <>
+            {items.map((item) => (
+                <DropdownMenuItem
+                    key={item.value}
+                    onClick={() => setTheme(item.value)}
+                    className={
+                        theme === item.value
+                            ? "bg-accent text-accent-foreground font-medium ml-2 mb-1"
+                            : "ml-2 mb-1"
+                    }
+                >
+                    {theme === item.value && ( 
+                        <Check className="h-4 w-4" />
+                    )}
+                    {item.label}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("dark")}>
-                Dark
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setTheme("system")}>
-                System
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
+            ))}
+        </>
     )
 }

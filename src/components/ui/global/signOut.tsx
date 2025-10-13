@@ -48,13 +48,13 @@ export default function SignOut() {
     return (
         <>
             {loading ? 
-                <Button onClick={handleSignOut} disabled className="hover:cursor-pointer">
+                <button onClick={handleSignOut} disabled className="hover:cursor-pointer">
                     <Spinner /> Déconnexion en cours...
-                </Button>
+                </button>
             :
-                <Button onClick={handleSignOut} disabled={false} className="hover:cursor-pointer">
+                <button onClick={handleSignOut} disabled={false} className="hover:cursor-pointer">
                     Se déconnecter
-                </Button>
+                </button>
             }
         </>
 
