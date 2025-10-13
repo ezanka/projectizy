@@ -16,15 +16,38 @@ export async function GET(
     }
 
     const users = await prisma.user.findMany({
-        where: { members: { some: { organization: { slug: organisationSlug } } } },
+        where: { 
+            members: { 
+                some: { 
+                    organization: { slug: organisationSlug } 
+                } 
+            } 
+        },
         select: {
             id: true,
             name: true,
+            email: true,
             createdAt: true,
             updatedAt: true,
-            members: { select: { role: true } },
+            members: { 
+                where: { 
+                    organization: { slug: organisationSlug } 
+                }, 
+                select: { 
+                    role: true 
+                } 
+            },
         },
     });
 
-    return NextResponse.json(users, { status: 200 });
+    const formattedUsers = users.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.members[0]?.role || 'N/A',
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+    }));
+
+    return NextResponse.json(formattedUsers, { status: 200 });
 }

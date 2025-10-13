@@ -14,7 +14,6 @@ import {
     VisibilityState,
 } from "@tanstack/react-table"
 import { ArrowUpDown, ChevronDown, Plus } from "lucide-react"
-import { useRouter } from "next/navigation"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
@@ -34,8 +33,20 @@ import {
     TableRow,
 } from "@/src/components/ui/shadcn/table"
 import { ButtonGroup } from "@/src/components/ui/shadcn/button-group"
-import Link from "next/link"
 import { UserBase } from "@/src/types/user"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+    DialogFooter,
+} from "@/src/components/ui/shadcn/dialog"
+import { Label } from "@/src/components/ui/shadcn/label"
+import { toast } from "sonner"
+import { BadgeX } from "lucide-react"
 
 export const columns: ColumnDef<UserBase>[] = [
     {
@@ -73,17 +84,27 @@ export const columns: ColumnDef<UserBase>[] = [
                 </Button>
             )
         },
-        cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+        cell: ({ row }) => <div>{row.getValue("name")}</div>,
+    },
+    {
+        accessorKey: "email",
+        header: ({ column }) => {
+            return (
+                <Button
+                    variant="ghost"
+                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                >
+                    Email
+                    <ArrowUpDown />
+                </Button>
+            )
+        },
+        cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
     },
     {
         accessorKey: "role",
         header: "Rôle",
-        cell: ({ row }) => <div className="lowercase">{row.getValue("role")}</div>,
-    },
-    {
-        accessorKey: "description",
-        header: () => <div className="text-left">Description</div>,
-        cell: ({ row }) => <div className="lowercase">{row.getValue("description")}</div>,
+        cell: ({ row }) => <div className="capitalize">{row.getValue("role")}</div>,
     },
 ]
 
@@ -97,7 +118,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
     const [rowSelection, setRowSelection] = React.useState({})
     const [data, setData] = React.useState<UserBase[]>([])
     const [loading, setLoading] = React.useState(true)
-    const router = useRouter();
+    const [email, setEmail] = React.useState("")
 
     React.useEffect(() => {
 
@@ -105,10 +126,10 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
             setLoading(true);
             try {
                 const response = await fetch(`/api/org/${organizationSlug}/get-org-user`);
-                const projects = await response.json();
-                setData(projects);
+                const members = await response.json();
+                setData(members);
             } catch (error) {
-                console.error('Error fetching projects:', error);
+                console.error('Error fetching members:', error);
             } finally {
                 setLoading(false);
             }
@@ -116,6 +137,37 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
 
         fetchData();
     }, [organizationSlug])
+
+    const inviteMember = async (email: string) => {
+        try {
+            const response = await fetch(`/api/org/${organizationSlug}/invite-member`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            if (response.ok) {
+                console.log('Invitation sent');
+            } else {
+                const errorData = await response.json();
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeX />
+                            <div>
+                                <div className="font-semibold">Erreur lors de l'envoi de l'invitation</div>
+                                <div className="text-sm opacity-90">{errorData.error}</div>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            }
+        } catch (error) {
+            console.error('Error sending invitation:', error);
+        }
+    };
 
     const table = useReactTable({
         data,
@@ -153,8 +205,6 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                             <Button variant="outline" className="ml-auto">
                                 Colonnes <ChevronDown />
                             </Button>
-
-
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             {table
@@ -176,17 +226,44 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                 })}
                         </DropdownMenuContent>
                     </DropdownMenu>                            
-                    <Button
-                        variant="outline"
-                        className="border-l-0 rounded-l-none"
-                        asChild
-                    >
-                        <Link href={`/dashboard/new/${organizationSlug}`}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nouveau projet
-                        </Link>
-
-                    </Button>
+                    <Dialog>
+                        <form>
+                            <DialogTrigger asChild>
+                                <Button className="rounded-l-none hover:bg-primary/80 transition-all cursor-pointer">
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nouveau membre
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                                <DialogTitle>Inviter un membre</DialogTitle>
+                                <DialogDescription>
+                                    Entrez l'adresse e-mail du membre que vous souhaitez inviter.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="grid gap-4">
+                                <div className="grid gap-3">
+                                    <Label htmlFor="email-1">Email</Label>
+                                    <Input id="email-1" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button variant="outline">Retour</Button>
+                                </DialogClose>
+                                <Button
+                                    type="submit"
+                                    onClick={async (e) => {
+                                        e.preventDefault();
+                                        await inviteMember(email);
+                                    }}
+                                >
+                                    Inviter
+                                </Button>
+                            </DialogFooter>
+                            </DialogContent>
+                        </form>
+                    </Dialog>
                 </ButtonGroup>
             </div>
             <div className="overflow-hidden rounded-md border">
@@ -217,7 +294,6 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                         key={row.id}
                                         data-state={row.getIsSelected() && "selected"}
                                         className="hover:cursor-pointer"
-                                        onClick={() => router.push(`/dashboard/org/${organizationSlug}/project/${row.original.id}`)}
                                     >
                                         {row.getVisibleCells().map((cell) => (
                                             <TableCell key={cell.id}>
@@ -235,7 +311,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                         colSpan={columns.length}
                                         className="h-24 text-center"
                                     >
-                                        Aucun projets.
+                                        Aucun membre.
                                     </TableCell>
                                 </TableRow>
                             )
@@ -245,7 +321,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                     colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
-                                    Récupération des projets...
+                                    Récupération des membres...
                                 </TableCell>
                             </TableRow>
                         )}
