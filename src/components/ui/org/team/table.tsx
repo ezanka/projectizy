@@ -46,7 +46,7 @@ import {
 } from "@/src/components/ui/shadcn/dialog"
 import { Label } from "@/src/components/ui/shadcn/label"
 import { toast } from "sonner"
-import { BadgeX } from "lucide-react"
+import { BadgeX, BadgeCheck } from "lucide-react"
 
 export const columns: ColumnDef<UserBase>[] = [
     {
@@ -149,7 +149,17 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
             });
 
             if (response.ok) {
-                console.log('Invitation sent');
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeCheck />
+                            <div>
+                                <div className="font-semibold">Invitation envoyée</div>
+                                <div className="text-sm opacity-90">L'invitation a été envoyée avec succès.</div>
+                            </div>
+                        </div>
+                    </div>
+                ))
             } else {
                 const errorData = await response.json();
                 toast.custom(() => (

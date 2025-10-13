@@ -13,6 +13,7 @@ import {
 import SignOut from "../../ui/global/signOut";
 import { Inbox, Settings } from "lucide-react";
 import Link from "next/link";
+import Notifications from "./notifications";
 
 export default async function Header() {
     const user = await getUser();
@@ -34,6 +35,7 @@ export default async function Header() {
                             <DropdownMenuContent>
                                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
+                                <Notifications />
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
