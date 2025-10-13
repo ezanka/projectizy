@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/src/lib/auth-client";
 import { toast } from "sonner";
 import { BadgeCheck, BadgeX } from "lucide-react";
-import { Button } from "@/src/components/ui/shadcn/button";
 import { useState } from "react";
 import { Spinner } from "../shadcn/spinner";
 

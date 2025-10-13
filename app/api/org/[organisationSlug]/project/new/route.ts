@@ -4,7 +4,10 @@ import { getUser } from "@/src/lib/auth-server";
 
 type Params = { organisationSlug: string };
 
-export async function POST(req: Request, { params }: { params: Params }) {
+export async function POST(
+    req: Request,
+    { params }: { params: Promise<Params> }
+) {
     try {
         const body = await req.json();
         const { name } = body ?? {};

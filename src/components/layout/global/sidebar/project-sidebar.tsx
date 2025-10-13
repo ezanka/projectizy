@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, Settings, ChevronsRight, Folders, Users, LayoutDashboard, Files, NotepadText, Activity, Github, Figma, ShieldUser } from "lucide-react"
+import { Settings, ChevronsRight, Folders, Users, LayoutDashboard, Files, NotepadText, Activity, Github, Figma, ShieldUser } from "lucide-react"
 import { useState } from "react"
 import {
     Sidebar,
@@ -8,7 +8,6 @@ import {
     SidebarFooter,
     SidebarGroup,
     SidebarGroupContent,
-    SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,

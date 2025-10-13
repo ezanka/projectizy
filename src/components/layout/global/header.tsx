@@ -21,13 +21,6 @@ export default async function Header() {
         return null;
     }
 
-    const logout = async () => {
-        await fetch('/api/auth/logout', {
-            method: 'POST',
-        });
-        window.location.href = '/';
-    }
-
     return (
         <header className="w-full border-b bg-sidebar z-10">
             <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
