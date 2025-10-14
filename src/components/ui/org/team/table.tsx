@@ -142,11 +142,8 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         };
 
         fetchData();
-    }, [organizationSlug]);
 
-    React.useEffect(() => {
-
-        const fetchUser = async () => {
+                const fetchUser = async () => {
             try {
                 const response = await fetch(`/api/org/${organizationSlug}/get-org-user`);
                 if (response.ok) {
@@ -163,7 +160,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         };
 
         fetchUser();
-    }, []);
+    }, [organizationSlug]);
 
     const canInvite = user?.role === "admin" || user?.role === "owner";
 
