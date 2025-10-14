@@ -11,4 +11,8 @@ export type Workspace = {
     updatedAt: string;
     type: WorkspaceType;
     plan: WorkspacePlan;
+    _count: {
+        members: number;
+        projects: number;
+    };
 }

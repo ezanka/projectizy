@@ -29,8 +29,8 @@ export default function OrgPage() {
 
     return (
         <div className="p-8">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold mb-4">Listes des organisations</h1>
+            <div className="flex items-center justify-between mb-8">
+                <h1 className="text-2xl font-bold">Listes des organisations</h1>
                 <Button asChild>
                     <Link href="/dashboard/organizations/new">
                         Créer une organisation
@@ -46,7 +46,7 @@ export default function OrgPage() {
                             <Link href={`/dashboard/org/${workspace.slug}`} className="block">
                                 <CardHeader>
                                     <CardTitle className="text-md">{workspace.name}</CardTitle>
-                                    <CardDescription>{workspace.type} - 0 projet</CardDescription>
+                                    <CardDescription>{workspace.type} - {workspace._count.projects} projet</CardDescription>
                                 </CardHeader>
                             </Link>
                         </Card>

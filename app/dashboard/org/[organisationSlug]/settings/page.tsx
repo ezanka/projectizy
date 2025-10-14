@@ -1,5 +1,5 @@
 import OrganizationNameSettings from "@/src/components/ui/org/settings/name";
-
+import { getUser } from "@/src/lib/auth-server";
 
 export default async function OrganizationSettingsPage({ 
     params,

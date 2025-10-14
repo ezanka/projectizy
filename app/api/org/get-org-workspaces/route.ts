@@ -23,6 +23,10 @@ export async function GET() {
             slug: true,
             createdAt: true,
             type: true,
+            projects: { select: { id: true } },
+            _count: {
+                select: { members: true, projects: true }
+            }
         }
     }); 
 

@@ -9,12 +9,15 @@ import { Button } from "../../shadcn/button";
 import { toast } from "sonner";
 import { BadgeCheck, BadgeX } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Spinner } from "../../shadcn/spinner";
 
 export default function OrganizationNameSettings({ organisationSlug }: { organisationSlug: string }) {
 
     const [orgInfo, setOrgInfo] = React.useState<Workspace | null>(null);
     const [name, setName] = React.useState<string>("");
     const router = useRouter();
+    const [authorized, setAuthorized] = React.useState(false);
+    const [loadingAuth, setLoadingAuth] = React.useState(true);
 
     React.useEffect(() => {
         const fetchOrgDetails = async () => {
@@ -29,6 +32,27 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
         };
 
         fetchOrgDetails();
+
+        const checkAuthorization = async () => {
+            try {
+                setLoadingAuth(true);
+                const response = await fetch(`/api/org/${organisationSlug}/get-org-user`);
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user.id === user.id && (user.role === 'owner' || user.role === 'admin')) {
+                        setAuthorized(true);
+                    }
+                } else {
+                    setAuthorized(false);
+                }
+            } catch (error) {
+                console.error("Error checking authorization:", error);
+            } finally {
+                setLoadingAuth(false);
+            }
+        };
+
+        checkAuthorization();
     }, [organisationSlug]);
 
     const handleSave = async () => {
@@ -49,7 +73,7 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
                             <BadgeCheck />
                             <div>
                                 <div className="font-semibold">Mise à jour réussie</div>
-                                <div className="text-sm opacity-90">Le nom de l'organisation a été mis à jour avec succès.</div>
+                                <div className="text-sm opacity-90">Le nom de l&apos;organisation a été mis à jour avec succès.</div>
                             </div>
                         </div>
                     </div>
@@ -76,19 +100,35 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
 
     return (
         <Card>
-            <CardContent className="flex items-center justify-between">
-                <p>Nom de l&apos;organisation</p>
-                <Input placeholder="Nom de l'organisation" value={name} onChange={(e) => setName(e.target.value)} className="max-w-xs" />
-            </CardContent>
-            <Separator />
-            <CardContent className="flex items-center justify-end gap-2">
-                <Button onClick={() => setName(orgInfo?.name || "")} variant={"outline"} disabled={name === orgInfo?.name}>
-                    Annuler
-                </Button>
-                <Button onClick={handleSave} disabled={name === orgInfo?.name}>
-                    Enregistrer les modifications
-                </Button>
-            </CardContent>
+            {loadingAuth ? (
+                <CardContent className="flex items-center justify-center">
+                    <p className="flex items-center gap-2"><Spinner /> Vérification des autorisations...</p>
+                </CardContent>
+            ) : (
+                authorized ? (
+                    <>
+                        <CardContent className="flex items-center justify-between">
+                            <p>Nom de l&apos;organisation</p>
+                            <Input placeholder="Nom de l'organisation" value={name} onChange={(e) => setName(e.target.value)} className="max-w-xs" />
+                        </CardContent>
+                        <Separator />
+                        <CardContent className="flex items-center justify-end gap-2">
+                            <Button onClick={() => setName(orgInfo?.name || "")} variant={"outline"} disabled={name === orgInfo?.name}>
+                                Annuler
+                            </Button>
+                            <Button onClick={handleSave} disabled={name === orgInfo?.name}>
+                                Enregistrer les modifications
+                            </Button>
+                        </CardContent>
+                    </>
+
+                ) : (
+                    <CardContent>
+                        <p className="text-red-500">Vous n&apos;êtes pas autorisé à modifier les paramètres de cette organisation.</p>
+                    </CardContent>
+                )
+            )}
+
         </Card>
     )
 }
