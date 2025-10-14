@@ -23,8 +23,8 @@ import {
     DropdownMenuContent,
     DropdownMenuTrigger,
     DropdownMenuItem,
-    DropdownMenuSeparator,
 } from "@/src/components/ui/shadcn/dropdown-menu"
+import ActionsMenu from "@/src/components/ui/org/team/actions-menu"
 import { Input } from "@/src/components/ui/shadcn/input"
 import {
     Table,
@@ -57,115 +57,123 @@ import {
 
 export const columns = (
     adminUser: boolean,
-    removeMember: (userId: string) => void
+    removeMember: (userId: string) => void,
+    changeRoleMember: (userId: string, role: string) => void
 ): ColumnDef<UserBase>[] => [
-    {
-        id: "select",
-        header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && "indeterminate")
-                }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Select all"
-            />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
-    {
-        accessorKey: "name",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Nom
-                    <ArrowUpDown />
-                </Button>
-            )
+        {
+            id: "select",
+            header: ({ table }) => (
+                <Checkbox
+                    checked={
+                        table.getIsAllPageRowsSelected() ||
+                        (table.getIsSomePageRowsSelected() && "indeterminate")
+                    }
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                />
+            ),
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Select row"
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
         },
-        cell: ({ row }) => <div>{row.getValue("name")}</div>,
-    },
-    {
-        accessorKey: "email",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Email
-                    <ArrowUpDown />
-                </Button>
-            )
+        {
+            accessorKey: "name",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Nom
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div>{row.getValue("name")}</div>,
         },
-        cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
-    },
-    {
-        accessorKey: "role",
-        header: "Rôle",
-        cell: ({ row }) => <div className="capitalize">{row.getValue("role")}</div>,
-    },
-    {
-        id: "actions",
-        enableHiding: false,
-        header: "Actions",
-        cell: ({ row }) => {
-            const user = row.original
-            return (
-                <>
-                    {adminUser ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Ouvrir menu utilisateur</span>
-                                    <MoreHorizontal />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                    onClick={() => navigator.clipboard.writeText(user.id)}
-                                >
-                                    Copy user ID
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => removeMember(user.id)}>
-                                    Supprimer l'utilisateur
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                    <span className="sr-only">Ouvrir menu utilisateur</span>
-                                    <MoreHorizontal />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                    onClick={() => navigator.clipboard.writeText(user.id)}
-                                >
-                                    Copy user ID
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
-                </>
-            )
+        {
+            accessorKey: "email",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Email
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
         },
-    },
-]
+        {
+            accessorKey: "role",
+            header: "Rôle",
+            cell: ({ row }) => <div className="capitalize">{row.getValue("role")}</div>,
+        },
+        {
+            id: "actions",
+            enableHiding: false,
+            header: "Actions",
+            cell: ({ row }) => {
+                const user = row.original
+                return (
+                    <>
+                        {row.getValue("role") === "owner" ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Ouvrir menu utilisateur</span>
+                                        <MoreHorizontal />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                        onClick={() => navigator.clipboard.writeText(user.id)}
+                                    >
+                                        Copy user ID
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            adminUser ? (
+                                <ActionsMenu
+                                    userId={user.id}
+                                    userRole={user.role}
+                                    onCopyId={(id) => navigator.clipboard.writeText(id)}
+                                    onRemove={(id) => removeMember(id)}
+                                    onChangeRole={(id, role) => changeRoleMember(id, role)}
+                                />
+                            ) : (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <span className="sr-only">Ouvrir menu utilisateur</span>
+                                            <MoreHorizontal />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                            onClick={() => navigator.clipboard.writeText(user.id)}
+                                        >
+                                            Copy user ID
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )
+                        )}
+
+                    </>
+                )
+            },
+        },
+    ]
 
 export function OrgTeamTable({ organizationSlug }: { organizationSlug: string }) {
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -259,6 +267,54 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         }
     };
 
+    const changeRoleMember = async (userId: string, role: string) => {
+        try {
+            const response = await fetch(`/api/org/${organizationSlug}/change-role-member`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId, role }),
+            });
+
+            if (response.ok) {
+                setData((prevData) =>
+                    prevData.map((member) =>
+                        member.id === userId
+                            ? { ...member, role }
+                            : member
+                    )
+                );
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeCheck />
+                            <div>
+                                <div className="font-semibold">Rôle modifié</div>
+                                <div className="text-sm opacity-90">Le rôle du membre a été modifié avec succès.</div>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            } else {
+                const errorData = await response.json();
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeX />
+                            <div>
+                                <div className="font-semibold">Erreur lors de la modification du rôle</div>
+                                <div className="text-sm opacity-90">{errorData.error}</div>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            }
+        } catch (error) {
+            console.error('Error removing member:', error);
+        }
+    };
+
     const inviteMember = async (email: string) => {
         try {
             const response = await fetch(`/api/org/${organizationSlug}/invite-member`, {
@@ -302,7 +358,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
 
     const table = useReactTable({
         data,
-        columns: columns(adminUser, removeMember),
+        columns: columns(adminUser, removeMember, changeRoleMember),
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
