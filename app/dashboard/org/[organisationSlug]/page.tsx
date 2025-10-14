@@ -10,7 +10,7 @@ export default async function OrganizationProjectPage({
 
     return (
         <>
-            <div>Organization Project Page</div>
+            <h1 className="text-xl font-semibold mb-4">Projets</h1>
             <ProjectTable organizationSlug={organisationSlug} />
         </>
     );

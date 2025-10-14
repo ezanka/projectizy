@@ -1,6 +1,6 @@
 
 export default function OrganizationCalendarPage() {
     return (
-        <div>Organization Calendar Page</div>
+        <h1 className="text-xl font-semibold mb-4">Calendrier de l&apos;organisation</h1>
     );
 }

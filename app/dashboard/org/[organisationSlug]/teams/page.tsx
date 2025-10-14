@@ -9,7 +9,7 @@ export default async function OrganizationTeamsPage({
 
     return (
         <div>
-            <h1>Organization Teams</h1>
+            <h1 className="text-xl font-semibold mb-4">Organization Teams</h1>
             <OrgTeamTable organizationSlug={organisationSlug} />
         </div>
     )

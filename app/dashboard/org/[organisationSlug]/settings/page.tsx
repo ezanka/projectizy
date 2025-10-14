@@ -1,6 +1,21 @@
+import OrganizationNameSettings from "@/src/components/ui/org/settings/name";
 
-export default function OrganizationSettingsPage() {
+
+export default async function OrganizationSettingsPage({ 
+    params,
+}: {
+    params: { organisationSlug: string }
+}) {
+
+    const { organisationSlug } = await params
+
     return (
-        <div>Organization Settings Page</div>
+        <>
+            <h1 className="text-xl font-semibold mb-4">Paramètres de l&apos;organisation</h1>
+            <div>
+                <h1 className="mb-2">Détails</h1>
+                <OrganizationNameSettings organisationSlug={organisationSlug} />
+            </div>
+        </>
     );
 }
