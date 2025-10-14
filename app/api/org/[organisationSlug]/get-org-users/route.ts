@@ -15,12 +15,11 @@ export async function GET(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userInOrg = await prisma.user.findFirst({
+    const users = await prisma.user.findMany({
         where: { 
-            id: user.id,
             members: { 
                 some: { 
-                    organization: { slug: organisationSlug }
+                    organization: { slug: organisationSlug } 
                 } 
             } 
         },
@@ -41,18 +40,14 @@ export async function GET(
         },
     });
 
-    if (!userInOrg) {
-        return NextResponse.json({ error: "User not found in organization" }, { status: 404 });
-    }
+    const formattedUsers = users.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.members[0]?.role || 'N/A',
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+    }));
 
-    const formattedUser = {
-        id: userInOrg.id,
-        name: userInOrg.name,
-        email: userInOrg.email,
-        role: userInOrg.members[0]?.role || 'N/A',
-        createdAt: userInOrg.createdAt,
-        updatedAt: userInOrg.updatedAt,
-    };
-
-    return NextResponse.json(formattedUser, { status: 200 });
+    return NextResponse.json(formattedUsers, { status: 200 });
 }

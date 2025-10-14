@@ -47,6 +47,11 @@ import {
 import { Label } from "@/src/components/ui/shadcn/label"
 import { toast } from "sonner"
 import { BadgeX, BadgeCheck } from "lucide-react"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/src/components/ui/shadcn/tooltip"
 
 export const columns: ColumnDef<UserBase>[] = [
     {
@@ -119,13 +124,14 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
     const [data, setData] = React.useState<UserBase[]>([])
     const [loading, setLoading] = React.useState(true)
     const [email, setEmail] = React.useState("")
+    const [user, setUser] = React.useState<UserBase | null>(null)
 
     React.useEffect(() => {
 
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`/api/org/${organizationSlug}/get-org-user`);
+                const response = await fetch(`/api/org/${organizationSlug}/get-org-users`);
                 const members = await response.json();
                 setData(members);
             } catch (error) {
@@ -136,7 +142,30 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         };
 
         fetchData();
-    }, [organizationSlug])
+    }, [organizationSlug]);
+
+    React.useEffect(() => {
+
+        const fetchUser = async () => {
+            try {
+                const response = await fetch(`/api/org/${organizationSlug}/get-org-user`);
+                if (response.ok) {
+                    const currentUser = await response.json();
+                    console.log("Fetched user:", currentUser);
+                    setUser(currentUser);
+                } else {
+                    setUser(null);
+                }
+            } catch (error) {
+                console.error('Error fetching user:', error);
+                setUser(null);
+            }
+        };
+
+        fetchUser();
+    }, []);
+
+    const canInvite = user?.role === "admin" || user?.role === "owner";
 
     const inviteMember = async (email: string) => {
         try {
@@ -235,42 +264,68 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                     )
                                 })}
                         </DropdownMenuContent>
-                    </DropdownMenu>                            
+                    </DropdownMenu>
                     <Dialog>
                         <form>
-                            <DialogTrigger asChild>
-                                <Button className="rounded-l-none hover:bg-primary/80 transition-all cursor-pointer">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nouveau membre
-                                </Button>
-                            </DialogTrigger>
+                            {canInvite ? (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <DialogTrigger asChild>
+                                            <Button className="rounded-l-none hover:bg-primary/80 transition-all cursor-pointer">
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Nouveau membre
+                                            </Button>
+                                        </DialogTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Ajouter un membre</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ) : (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="inline-flex">
+                                            <Button
+                                                disabled
+                                                className="rounded-l-none transition-all cursor-not-allowed"
+                                            >
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Nouveau membre
+                                            </Button>
+                                        </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Rôle admin ou propriétaire requis.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
                             <DialogContent className="sm:max-w-[425px]">
-                            <DialogHeader>
-                                <DialogTitle>Inviter un membre</DialogTitle>
-                                <DialogDescription>
-                                    Entrez l&apos;adresse e-mail du membre que vous souhaitez inviter.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4">
-                                <div className="grid gap-3">
-                                    <Label htmlFor="email-1">Email</Label>
-                                    <Input id="email-1" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                <DialogHeader>
+                                    <DialogTitle>Inviter un membre</DialogTitle>
+                                    <DialogDescription>
+                                        Entrez l&apos;adresse e-mail du membre que vous souhaitez inviter.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4">
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="email-1">Email</Label>
+                                        <Input id="email-1" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                    </div>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button variant="outline">Retour</Button>
-                                </DialogClose>
-                                <Button
-                                    type="submit"
-                                    onClick={async (e) => {
-                                        e.preventDefault();
-                                        await inviteMember(email);
-                                    }}
-                                >
-                                    Inviter
-                                </Button>
-                            </DialogFooter>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">Retour</Button>
+                                    </DialogClose>
+                                    <Button
+                                        type="submit"
+                                        onClick={async (e) => {
+                                            e.preventDefault();
+                                            await inviteMember(email);
+                                        }}
+                                    >
+                                        Inviter
+                                    </Button>
+                                </DialogFooter>
                             </DialogContent>
                         </form>
                     </Dialog>
