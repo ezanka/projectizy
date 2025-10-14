@@ -15,9 +15,9 @@ export default async function OrgLayout({
     } 
 
     return (
-        <main className="flex flex-1 flex-col max-w-6xl mx-auto w-full p-8">
+        <main className="flex flex-1 flex-col w-full">
             <ProjectSidebar />
-            <div className="ml-10">
+            <div >
                 {children}
             </div>
         </main>
