@@ -17,7 +17,6 @@ import { ArrowUpDown, ChevronDown, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/src/components/ui/shadcn/button"
-import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
@@ -49,28 +48,6 @@ export type Project = {
 }
 
 export const columns: ColumnDef<Project>[] = [
-    {
-        id: "select",
-        header: ({ table }) => (
-            <Checkbox
-                checked={
-                    table.getIsAllPageRowsSelected() ||
-                    (table.getIsSomePageRowsSelected() && "indeterminate")
-                }
-                onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-                aria-label="Select all"
-            />
-        ),
-        cell: ({ row }) => (
-            <Checkbox
-                checked={row.getIsSelected()}
-                onCheckedChange={(value) => row.toggleSelected(!!value)}
-                aria-label="Select row"
-            />
-        ),
-        enableSorting: false,
-        enableHiding: false,
-    },
     {
         accessorKey: "status",
         header: "Status",
@@ -111,7 +88,6 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
     )
     const [columnVisibility, setColumnVisibility] =
         React.useState<VisibilityState>({})
-    const [rowSelection, setRowSelection] = React.useState({})
     const [data, setData] = React.useState<Project[]>([])
     const [loading, setLoading] = React.useState(true)
     const router = useRouter();
@@ -144,12 +120,10 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         onColumnVisibilityChange: setColumnVisibility,
-        onRowSelectionChange: setRowSelection,
         state: {
             sorting,
             columnFilters,
             columnVisibility,
-            rowSelection,
         },
     })
 
@@ -192,7 +166,7 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                                     )
                                 })}
                         </DropdownMenuContent>
-                    </DropdownMenu>                            
+                    </DropdownMenu>
                     <Button
                         variant="outline"
                         className="border-l-0 rounded-l-none"
@@ -232,7 +206,6 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                                 table.getRowModel().rows.map((row) => (
                                     <TableRow
                                         key={row.id}
-                                        data-state={row.getIsSelected() && "selected"}
                                         className="hover:cursor-pointer"
                                         onClick={() => router.push(`/dashboard/org/${organizationSlug}/project/${row.original.slug}`)}
                                     >
@@ -270,10 +243,6 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                 </Table>
             </div>
             <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="text-muted-foreground flex-1 text-sm">
-                    {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                    {table.getFilteredRowModel().rows.length} ligne(s) sélectionnée(s).
-                </div>
                 <div className="space-x-2">
                     <Button
                         variant="outline"

@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, Plus } from "lucide-react"
+import { ArrowUpDown, ChevronDown, Plus, MoreHorizontal } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
@@ -22,6 +22,8 @@ import {
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuTrigger,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
 } from "@/src/components/ui/shadcn/dropdown-menu"
 import { Input } from "@/src/components/ui/shadcn/input"
 import {
@@ -53,7 +55,10 @@ import {
     TooltipTrigger,
 } from "@/src/components/ui/shadcn/tooltip"
 
-export const columns: ColumnDef<UserBase>[] = [
+export const columns = (
+    adminUser: boolean,
+    removeMember: (userId: string) => void
+): ColumnDef<UserBase>[] => [
     {
         id: "select",
         header: ({ table }) => (
@@ -111,6 +116,55 @@ export const columns: ColumnDef<UserBase>[] = [
         header: "Rôle",
         cell: ({ row }) => <div className="capitalize">{row.getValue("role")}</div>,
     },
+    {
+        id: "actions",
+        enableHiding: false,
+        header: "Actions",
+        cell: ({ row }) => {
+            const user = row.original
+            return (
+                <>
+                    {adminUser ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Ouvrir menu utilisateur</span>
+                                    <MoreHorizontal />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => navigator.clipboard.writeText(user.id)}
+                                >
+                                    Copy user ID
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => removeMember(user.id)}>
+                                    Supprimer l'utilisateur
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Ouvrir menu utilisateur</span>
+                                    <MoreHorizontal />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                    onClick={() => navigator.clipboard.writeText(user.id)}
+                                >
+                                    Copy user ID
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </>
+            )
+        },
+    },
 ]
 
 export function OrgTeamTable({ organizationSlug }: { organizationSlug: string }) {
@@ -143,12 +197,11 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
 
         fetchData();
 
-                const fetchUser = async () => {
+        const fetchUser = async () => {
             try {
                 const response = await fetch(`/api/org/${organizationSlug}/get-org-user`);
                 if (response.ok) {
                     const currentUser = await response.json();
-                    console.log("Fetched user:", currentUser);
                     setUser(currentUser);
                 } else {
                     setUser(null);
@@ -162,7 +215,49 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         fetchUser();
     }, [organizationSlug]);
 
-    const canInvite = user?.role === "admin" || user?.role === "owner";
+    const adminUser = user?.role === "admin" || user?.role === "owner";
+
+    const removeMember = async (userId: string) => {
+        try {
+            const response = await fetch(`/api/org/${organizationSlug}/remove-member`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }),
+            });
+
+            if (response.ok) {
+                setData((prevData) => prevData.filter((member) => member.id !== userId));
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeCheck />
+                            <div>
+                                <div className="font-semibold">Membre supprimé</div>
+                                <div className="text-sm opacity-90">Le membre a été supprimé avec succès.</div>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            } else {
+                const errorData = await response.json();
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeX />
+                            <div>
+                                <div className="font-semibold">Erreur lors de la suppression du membre</div>
+                                <div className="text-sm opacity-90">{errorData.error}</div>
+                            </div>
+                        </div>
+                    </div>
+                ))
+            }
+        } catch (error) {
+            console.error('Error removing member:', error);
+        }
+    };
 
     const inviteMember = async (email: string) => {
         try {
@@ -207,7 +302,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
 
     const table = useReactTable({
         data,
-        columns,
+        columns: columns(adminUser, removeMember),
         onSortingChange: setSorting,
         onColumnFiltersChange: setColumnFilters,
         getCoreRowModel: getCoreRowModel(),
@@ -264,7 +359,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                     </DropdownMenu>
                     <Dialog>
                         <form>
-                            {canInvite ? (
+                            {adminUser ? (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <DialogTrigger asChild>
