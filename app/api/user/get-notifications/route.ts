@@ -13,12 +13,35 @@ export async function GET() {
     const notifications = await prisma.invitation.findMany({
         where: { 
             email: user.email,
-            status: "pending"
+            status: "pending",
+            inviterId: { not: user.id },
         },
         include: {
             organization: true,
         },
     });
 
-    return NextResponse.json(notifications, { status: 200 });
+    const inviterEmails = await Promise.all(
+        notifications.map(async (invitation) => {
+            const inviter = await prisma.user.findUnique({
+                where: { id: invitation.inviterId },
+            });
+            return inviter ? inviter.email : null;
+        })
+    );
+
+    const formattedNotifications = notifications.map(notification => ({
+        id: notification.id,
+        email: notification.email,
+        status: notification.status,
+        organization: notification.organization ? {
+            id: notification.organization.id,
+            name: notification.organization.name,
+            slug: notification.organization.slug,
+            createdAt: notification.organization.createdAt.toISOString(),
+        } : null,
+        inviterEmail: inviterEmails.shift() || null,
+    }));
+
+    return NextResponse.json(formattedNotifications, { status: 200 });
 }

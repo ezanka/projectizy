@@ -12,4 +12,5 @@ export type Notification = {
         createdAt: string;
         updatedAt: string;
     } | null;
+    inviterEmail: string | null;
 };

@@ -62,7 +62,7 @@ export default function Notifications() {
                         <div key={notification.id}>
                             <div>
                                 <p className="max-w-50">
-                                    <span className="font-bold">{notification.email}</span> vous invite à rejoindre l&apos;organisation suivante :
+                                    <span className="font-bold">{notification.inviterEmail}</span> vous invite à rejoindre l&apos;organisation suivante :
                                 </p>
                                 {notification.organization && (
                                     <ul>
