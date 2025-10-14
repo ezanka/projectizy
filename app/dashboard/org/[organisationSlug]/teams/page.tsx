@@ -1,6 +1,6 @@
 import { OrgTeamTable } from "@/src/components/ui/org/team/table"
 import { prisma } from "@/src/lib/prisma"
-import { ArrowUpRightIcon, User } from "lucide-react"
+import { User } from "lucide-react"
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
     Empty,
@@ -31,15 +31,15 @@ export default async function OrganizationTeamsPage({
                     <EmptyMedia variant="icon">
                         <User />
                     </EmptyMedia>
-                    <EmptyTitle>Type d'organisation incompatible</EmptyTitle>
+                    <EmptyTitle>Type d&apos;organisation incompatible</EmptyTitle>
                     <EmptyDescription>
                         Les équipes ne sont pas disponibles pour les organisations personnelles.
                     </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent>
                     <div className="flex gap-2">
-                        <Button><Link href="/dashboard/organizations">Changer d'organisation</Link></Button>
-                        <Button variant="outline">Changer le type d'organisation</Button>
+                        <Button><Link href="/dashboard/organizations">Changer d&apos;organisation</Link></Button>
+                        <Button variant="outline">Changer le type d&apos;organisation</Button>
                     </div>
                 </EmptyContent>
             </Empty>
