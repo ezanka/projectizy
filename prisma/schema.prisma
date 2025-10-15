@@ -168,6 +168,7 @@ model Project {
     status       projectStatus    @default(TODO)
 
     tags         Tag[]
+    providers    Provider[]
 
     @@unique([workspaceSlug, slug])
 
@@ -180,4 +181,24 @@ model Tag {
     project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@index([projectId])
+}
+
+enum ProviderName {
+    github
+    figma
+    notion
+}
+
+model Provider {
+    id        String   @id @default(cuid())
+    name      ProviderName
+    url       String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now()) @updatedAt
+
+    projectId String
+    project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+    @@unique([name, projectId])
+    @@map("provider")
 }
