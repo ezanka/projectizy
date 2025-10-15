@@ -22,6 +22,8 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
+import { useRouter } from "next/navigation"
+
 const formSchema = z.object({
     owner: z.string().min(2).max(50),
     repository: z.string().min(2).max(100),
@@ -29,6 +31,7 @@ const formSchema = z.object({
 })
 
 export default function ProjectIntegrationGithubConfig({ organisationSlug, projectSlug }: { organisationSlug: string, projectSlug: string }) {
+    const router = useRouter();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -41,7 +44,6 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            console.log("Sending values:", values); 
 
             const res = await fetch(`/api/org/${organisationSlug}/project/provider/config/github`, {
                 method: "POST",
@@ -49,15 +51,13 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                 body: JSON.stringify(values),
             });
 
-            console.log("Response status:", res.status);
-
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
                 console.error('API error', res.status, data);
                 throw new Error(`${res.status} - ${data?.error ?? 'Unknown error'}`);
             }
 
-            console.log("Success:", data);
+            router.refresh();
         } catch (error) {
             console.error("Error:", error);
         }
