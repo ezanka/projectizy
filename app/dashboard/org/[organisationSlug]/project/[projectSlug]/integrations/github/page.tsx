@@ -1,16 +1,16 @@
 import ProjectIntegrationGithubConfig from "@/src/components/ui/org/project/providers/github/config"
 import { prisma } from "@/src/lib/prisma"
 import { ProviderName } from "@prisma/client";
-import { GitCommit, User, Calendar, ExternalLink, FolderGit } from 'lucide-react';
+import { GitCommit, User, Calendar, ExternalLink, FolderGit, Settings } from 'lucide-react';
 import Image from "next/image";
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
+    Empty,
+    EmptyContent,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyMedia,
+    EmptyTitle,
 } from "@/src/components/ui/shadcn/empty"
 import Link from "next/link";
 
@@ -115,7 +115,7 @@ export default async function ProjectIntegrationGithubPage({ params }: { params:
     })
 
     if (!githubProject) {
-        return <ProjectIntegrationGithubConfig organisationSlug={organisationSlug} projectSlug={projectSlug} />
+        return <ProjectIntegrationGithubConfig organisationSlug={organisationSlug} projectSlug={projectSlug} providerUrl="" />
     }
 
     const githubData = await fetch(githubProject.url).then(res => res.json())
@@ -154,11 +154,18 @@ export default async function ProjectIntegrationGithubPage({ params }: { params:
         <div className="max-w-4xl mx-auto p-6">
             <div className="rounded-lg shadow-sm overflow-hidden">
                 <div className="bg-gradient-to-r from-gray-900 to-gray-800 p-6 mb-2">
-                    <div className="flex items-center gap-3 text-white">
-                        <GitCommit className="w-6 h-6" />
+                    <div className="flex items-center justify-between text-white">
+                        <div className="flex items-center gap-3">
+                            <GitCommit className="w-6 h-6" />
+                            <div>
+                                <h1 className="text-2xl font-bold">Commits Récents</h1>
+                                <p className="text-gray-300 text-sm mt-1">{projectSlug}</p>
+                            </div>
+                        </div>
                         <div>
-                            <h1 className="text-2xl font-bold">Commits Récents</h1>
-                            <p className="text-gray-300 text-sm mt-1">{projectSlug}</p>
+                            <h1 className="text-sm text-gray-300">Dépôt :</h1>
+                            <p className="text-gray-300 text-sm my-1">{githubProject.url.split('/').slice(-2, -1)[0]}</p>
+                            <Button><Settings /><Link href={`http://localhost:3000/dashboard/org/${organisationSlug}/project/${projectSlug}/integrations/github/config`}>configurer</Link></Button>
                         </div>
                     </div>
                 </div>

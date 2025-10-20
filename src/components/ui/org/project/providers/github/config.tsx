@@ -23,6 +23,8 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 
 import { useRouter } from "next/navigation"
+import { Spinner } from "@/src/components/ui/shadcn/spinner";
+import React from "react";
 
 const formSchema = z.object({
     owner: z.string().min(2).max(50),
@@ -30,36 +32,64 @@ const formSchema = z.object({
     projectSlug: z.string().optional(),
 })
 
-export default function ProjectIntegrationGithubConfig({ organisationSlug, projectSlug }: { organisationSlug: string, projectSlug: string }) {
+export default function ProjectIntegrationGithubConfig({ organisationSlug, projectSlug, providerUrl }: { organisationSlug: string, projectSlug: string, providerUrl: string }) {
     const router = useRouter();
+    const [isLoading, setIsLoading] = React.useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            owner: "",
-            repository: "",
+            owner: providerUrl.split('/').slice(-3, -2)[0] || "",
+            repository: providerUrl.split('/').slice(-2, -1)[0] || "",
             projectSlug: projectSlug,
         },
     })
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
+        if (!providerUrl) {
+            try {
+                setIsLoading(true);
+                const res = await fetch(`/api/org/${organisationSlug}/project/provider/config/github`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(values),
+                });
 
-            const res = await fetch(`/api/org/${organisationSlug}/project/provider/config/github`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(values),
-            });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    console.error('API error', res.status, data);
+                    throw new Error(`${res.status} - ${data?.error ?? 'Unknown error'}`);
+                }
 
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) {
-                console.error('API error', res.status, data);
-                throw new Error(`${res.status} - ${data?.error ?? 'Unknown error'}`);
+                router.refresh();
+            } catch (error) {
+                console.error("Error:", error);
+            } finally {
+                setIsLoading(false);
+                router.push(`/dashboard/org/${organisationSlug}/project/${projectSlug}/integrations/github`);
             }
+        } else {
+            try {
+                setIsLoading(true);
+                const res = await fetch(`/api/org/${organisationSlug}/project/provider/config/github`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(values),
+                });
 
-            router.refresh();
-        } catch (error) {
-            console.error("Error:", error);
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    console.error('API error', res.status, data);
+                    throw new Error(`${res.status} - ${data?.error ?? 'Unknown error'}`);
+                }
+
+                router.refresh();
+            } catch (error) {
+                console.error("Error:", error);
+            } finally {
+                setIsLoading(false);
+                router.push(`/dashboard/org/${organisationSlug}/project/${projectSlug}/integrations/github`);
+            }
         }
     }
 
@@ -78,7 +108,7 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                                 <FormItem>
                                     <FormLabel>Owner</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="ezanka" {...field} />
+                                        <Input placeholder="username" {...field} />
                                     </FormControl>
                                     <FormDescription>
                                         Quel est le nom du propriétaire du dépôt ?
@@ -94,7 +124,7 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                                 <FormItem>
                                     <FormLabel>Repository</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="projectizy" {...field} />
+                                        <Input placeholder="repository" {...field} />
                                     </FormControl>
                                     <FormDescription>
                                         Quel est le nom du dépôt ?
@@ -103,7 +133,9 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit">Configurer le dépôt</Button>
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading ? <><Spinner /><span>Configuration en cours...</span></> : "Configurer le dépôt"}
+                        </Button>
                     </form>
                 </Form>
             </CardContent>
