@@ -15,7 +15,7 @@ export default async function OrganizationSettingsPage({
             <div>
                 <h1 className="mb-2 font-bold text-2xl">Détails</h1>
                 <OrganizationNameSettings organisationSlug={organisationSlug} />
-                <h1 className="mt-10 mb-2 font-bold text-2xl">Supprimer l'organisation</h1>
+                <h1 className="mt-10 mb-2 font-bold text-2xl">Supprimer l&apos;organisation</h1>
                 <OrganizationDangerZoneSettings organisationSlug={organisationSlug} />
             </div>
         </>

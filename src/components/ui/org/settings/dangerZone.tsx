@@ -91,7 +91,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                     <div className="flex items-center gap-2">
                         <BadgeX />
                         <div>
-                            <div className="font-semibold">Le nom de l'organisation ne correspond pas</div>
+                            <div className="font-semibold">Le nom de l&apos;organisation ne correspond pas</div>
                         </div>
                     </div>
                 </div>
@@ -116,7 +116,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                             <BadgeCheck />
                             <div>
                                 <div className="font-semibold">Suppréssion réussie</div>
-                                <div className="text-sm opacity-90">L'organisation a été supprimée avec succès.</div>
+                                <div className="text-sm opacity-90">L&apos;organisation a été supprimée avec succès.</div>
                             </div>
                         </div>
                     </div>
@@ -152,12 +152,12 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                     <>
                         <CardContent className="flex flex-col gap-4">
                             <p className="font-semibold text-primary">La suppression de ce projet supprimera également votre base de données.</p>
-                            <p className="text-muted-foreground">Assurez-vous d'avoir effectué une sauvegarde si vous souhaitez conserver vos données</p>
+                            <p className="text-muted-foreground">Assurez-vous d&apos;avoir effectué une sauvegarde si vous souhaitez conserver vos données</p>
                             <div className="flex items-center justify-end gap-2">
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <Button type="button" className="border-red-800 bg-red-900/50 text-white hover:bg-red-900/70 hover:border-red-900">
-                                            Supprimer l'organisation
+                                            Supprimer l&apos;organisation
                                         </Button>
                                     </DialogTrigger>
 
@@ -165,13 +165,13 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                                         <Form {...form}>
                                             <form onSubmit={form.handleSubmit(handleDelete)}>
                                                 <DialogHeader>
-                                                    <DialogTitle>Confirmer la suppression de l'organisation</DialogTitle>
+                                                    <DialogTitle>Confirmer la suppression de l&apos;organisation</DialogTitle>
                                                     <div className="flex items-center text-center gap-2 bg-accent px-4 py-2 rounded-md">
                                                         <span className="text-red-500"><TriangleAlert /></span>
                                                         <p>Cette action est irréversible.</p>
                                                     </div>
                                                     <DialogDescription className="mb-2">
-                                                        Assurez-vous d'avoir effectué une sauvegarde si vous souhaitez conserver vos données.
+                                                        Assurez-vous d&apos;avoir effectué une sauvegarde si vous souhaitez conserver vos données.
                                                     </DialogDescription>
                                                 </DialogHeader>
 
@@ -183,7 +183,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                                                             render={({ field }) => (
                                                                 <FormItem>
                                                                     <FormLabel>
-                                                                        Taper <span className="font-black">'{orgInfo?.name}'</span> pour confirmer
+                                                                        Taper <span className="font-black">&apos;{orgInfo?.name}&apos;</span> pour confirmer
                                                                     </FormLabel>
                                                                     <FormControl>
                                                                         <Input placeholder="Taper le nom de l'organisation" {...field} />
