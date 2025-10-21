@@ -24,16 +24,17 @@ import { Input } from "@/src/components/ui/shadcn/input"
 import { Button } from "@/src/components/ui/shadcn/button"
 import Link from "next/link"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/src/components/ui/shadcn/select"
-import { ExternalLink } from "lucide-react"
+import { BadgeX, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Spinner } from "../../shadcn/spinner"
+import { toast } from "sonner"
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -70,7 +71,17 @@ export function NewOrganizationForm() {
                     const org = await res.json()
                     router.push(`/dashboard/org/${org.slug}`)
                 } else {
-                    console.error("Erreur lors de la création de l'organisation")
+                    const errorData = await res.json()
+                    toast.custom(() => (
+                        <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                            <div className="flex items-center gap-2">
+                                <BadgeX />
+                                <div>
+                                    <div className="font-semibold">{errorData.error}</div>
+                                </div>
+                            </div>
+                        </div>
+                    ))
                 }
             })
         } catch (error) {
@@ -120,7 +131,7 @@ export function NewOrganizationForm() {
                                                 <SelectItem value="education">Éducation</SelectItem>
                                                 <SelectItem value="company">Entreprise</SelectItem>
                                                 <SelectItem value="other">Autre</SelectItem>
-                                            </SelectContent> 
+                                            </SelectContent>
                                         </Select>
                                     </FormControl>
                                     <FormDescription>

@@ -12,6 +12,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        const nbOrg = await prisma.organization.count({
+            where: { members: { some: { userId: user.id } } },
+        });
+
+        if (nbOrg >= 3) {
+            return NextResponse.json({ error: "Limite d'organisations atteinte" }, { status: 403 });
+        }
+
         function generateSlug(length: number = 20): string {
             const chars = 'abcdefghijklmnopqrstuvwxyz';
             let result = ''
