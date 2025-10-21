@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/src/components/ui/shadcn/sonner"
 import { ThemeProvider } from "@/src/components/theme-provider"
+import { Analytics } from "@vercel/analytics/next"
 
 export const metadata: Metadata = {
   title: "Projectizy",
@@ -29,6 +30,7 @@ export default function RootLayout({
                         <Toaster position="top-right" />
                     </main>
                 </ThemeProvider>
+                <Analytics />
             </body>
         </html>
     );
