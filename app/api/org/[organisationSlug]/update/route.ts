@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
@@ -11,7 +10,7 @@ export async function PATCH(
 ) {
     try {
         const body = await req.json();
-        const { name } = body ?? {};
+        const { name, type } = body ?? {};
         const user = await getUser();
         const { organisationSlug } = await params;
 
@@ -19,28 +18,40 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        if (!name) {
-            return NextResponse.json({ error: "Des champs sont manquants" }, { status: 400 });
-        }
-
-        const checkDoublon = await prisma.organization.findMany({
-            where: { 
-                name,
-                members: { some: { userId: user.id } }
+        const userRole = await prisma.member.findFirst({
+            where: {
+                userId: user.id,
+                organization: { slug: organisationSlug },
             },
         });
 
-        if (checkDoublon.length > 0) {
+        if (!userRole || (userRole.role !== "owner" && userRole.role !== "admin")) {
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
+
+        const existingOrg = await prisma.organization.findFirst({
+            where: {
+                name,
+                slug: { not: organisationSlug },
+                members: { some: { userId: user.id } },
+            },
+        });
+
+        if (existingOrg) {
             return NextResponse.json({ error: "Une organisation avec ce nom existe déjà" }, { status: 409 });
         }
 
-        await prisma.organization.update({
+        const updatedOrg = await prisma.organization.update({
             where: { slug: organisationSlug },
-            data: { name },
+            data: { 
+                ...(name && { name }),
+                ...(type && { type }),
+            },
         });
 
-        return NextResponse.json({ success: true }, { status: 200 });
-    } catch {
-        return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+        return NextResponse.json(updatedOrg, { status: 200 });
+    } catch (error) {
+        console.error("Error updating organization:", error);
+        return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     }
 }
