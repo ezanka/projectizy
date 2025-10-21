@@ -521,7 +521,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                             ) : (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={columns.length}
+                                        colSpan={table.getAllColumns().length}
                                         className="h-24 text-center"
                                     >
                                         Aucun membre.
@@ -531,7 +531,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                         ) : (
                             <TableRow>
                                 <TableCell
-                                    colSpan={columns.length}
+                                    colSpan={table.getAllColumns().length}
                                     className="h-24 text-center"
                                 >
                                     Récupération des membres...
