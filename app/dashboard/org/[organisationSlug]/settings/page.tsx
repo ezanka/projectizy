@@ -1,13 +1,12 @@
 import OrganizationNameSettings from "@/src/components/ui/org/settings/name";
 import OrganizationDangerZoneSettings from "@/src/components/ui/org/settings/dangerZone";
 
-export default async function OrganizationSettingsPage({ 
+export default async function OrganizationSettingsPage({
     params,
 }: {
     params: { organisationSlug: string }
 }) {
-
-    const { organisationSlug } = await params
+    const { organisationSlug } = await params;
 
     return (
         <>
