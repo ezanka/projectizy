@@ -28,7 +28,7 @@ export default function OrgPage() {
     }, [])
 
     return (
-        <div className="p-8">
+        <div className="p-8 max-w-6xl mx-auto w-full">
             <div className="flex items-center justify-between mb-8">
                 <h1 className="text-2xl font-bold">Listes des organisations</h1>
                 <Button asChild>
