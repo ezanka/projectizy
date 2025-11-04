@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
     images: {
-        domains: ["avatars.githubusercontent.com"],
+        remotePatterns: [
+            new URL("https://avatars.githubusercontent.com"),
+            new URL("https://store_EVCcia5iGubdl64l.public.blob.vercel-storage.com/**"),
+        ],
     },
 };
 
