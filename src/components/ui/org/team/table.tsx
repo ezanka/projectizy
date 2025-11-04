@@ -54,6 +54,7 @@ import {
     TooltipContent,
     TooltipTrigger,
 } from "@/src/components/ui/shadcn/tooltip"
+import { Spinner } from "../../shadcn/spinner"
 
 export const columns = (
     adminUser: boolean,
@@ -185,6 +186,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
     const [rowSelection, setRowSelection] = React.useState({})
     const [data, setData] = React.useState<UserBase[]>([])
     const [loading, setLoading] = React.useState(true)
+    const [invitatingLoading, setInvitatingLoading] = React.useState(false)
     const [email, setEmail] = React.useState("")
     const [user, setUser] = React.useState<UserBase | null>(null)
 
@@ -317,6 +319,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
 
     const inviteMember = async (email: string) => {
         try {
+            setInvitatingLoading(true);
             const response = await fetch(`/api/org/${organizationSlug}/invite-member`, {
                 method: 'POST',
                 headers: {
@@ -350,6 +353,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                         </div>
                     </div>
                 ))
+                setInvitatingLoading(false);
             }
         } catch (error) {
             console.error('Error sending invitation:', error);
@@ -457,21 +461,28 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                 <div className="grid gap-4">
                                     <div className="grid gap-3">
                                         <Label htmlFor="email-1">Email</Label>
-                                        <Input id="email-1" name="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                                        <Input id="email-1" name="email" disabled={invitatingLoading} value={email} onChange={(e) => setEmail(e.target.value)} />
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <DialogClose asChild>
+                                    <DialogClose disabled={invitatingLoading} asChild>
                                         <Button variant="outline">Retour</Button>
                                     </DialogClose>
                                     <Button
                                         type="submit"
+                                        disabled={invitatingLoading}
                                         onClick={async (e) => {
                                             e.preventDefault();
                                             await inviteMember(email);
                                         }}
                                     >
-                                        Inviter
+                                        {invitatingLoading ? (
+                                            <span className="inline-flex items-center gap-2">
+                                                <Spinner className="h-4 w-4" /> Invitation en cours...
+                                            </span>
+                                        ) : (
+                                            "Inviter"
+                                        )}
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>

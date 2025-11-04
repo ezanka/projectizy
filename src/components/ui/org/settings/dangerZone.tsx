@@ -41,6 +41,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
     const router = useRouter();
     const [authorized, setAuthorized] = React.useState(false);
     const [loadingAuth, setLoadingAuth] = React.useState(true);
+    const [loadingDelete, setLoadingDelete] = React.useState(false);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -100,6 +101,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
         }
 
         try {
+            setLoadingDelete(true);
             const response = await fetch(`/api/org/${organisationSlug}/delete`, {
                 method: "DELETE",
                 headers: {
@@ -135,6 +137,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                         </div>
                     </div>
                 ))
+                setLoadingDelete(false);
             }
         } catch (error) {
             console.error("Error deleting organization:", error);
@@ -180,6 +183,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                                                         <FormField
                                                             control={form.control}
                                                             name="organisationName"
+                                                            disabled={loadingDelete}
                                                             render={({ field }) => (
                                                                 <FormItem>
                                                                     <FormLabel>
@@ -197,9 +201,17 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
 
                                                 <DialogFooter>
                                                     <DialogClose asChild>
-                                                        <Button type="button" variant="outline">Annuler</Button>
+                                                        <Button type="button" variant="outline" disabled={loadingDelete}>Annuler</Button>
                                                     </DialogClose>
-                                                    <Button type="submit">Supprimer</Button>
+                                                    <Button type="submit" disabled={loadingDelete}>
+                                                        {loadingDelete ? (
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <Spinner className="h-4 w-4" /> Suppression en cours...
+                                                            </span>
+                                                        ) : (
+                                                            "Supprimer l'organisation"
+                                                        )}
+                                                    </Button>
                                                 </DialogFooter>
                                             </form>
                                         </Form>

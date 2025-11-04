@@ -5,30 +5,16 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 
 import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
+    Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,
 } from "@/src/components/ui/shadcn/form"
 import {
-    Card,
-    CardContent,
-    CardFooter,
-    CardHeader,
-    CardTitle,
+    Card, CardContent, CardFooter, CardHeader, CardTitle,
 } from "@/src/components/ui/shadcn/card"
 import { Input } from "@/src/components/ui/shadcn/input"
 import { Button } from "@/src/components/ui/shadcn/button"
 import Link from "next/link"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/src/components/ui/shadcn/select"
 import { BadgeX, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -37,68 +23,61 @@ import { Spinner } from "../../shadcn/spinner"
 import { toast } from "sonner"
 
 const formSchema = z.object({
-    name: z.string().min(2, {
-        message: "Le nom doit comporter au moins 2 caractères.",
-    }),
+    name: z.string().min(2, { message: "Le nom doit comporter au moins 2 caractères." }),
     type: z.enum(["personal", "education", "company", "other"]),
     plan: z.enum(["free", "pro"]),
 })
 
 export function NewOrganizationForm() {
     const router = useRouter()
-    const [isLoading, setIsLoading] = useState(false)
+    const [creating, setCreating] = useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: "",
-            type: "personal",
-            plan: "free",
-        },
+        defaultValues: { name: "", type: "personal", plan: "free" },
     })
 
-    function onSubmit(values: z.infer<typeof formSchema>) {
+    const disabled = creating || form.formState.isSubmitting
+
+    async function onSubmit(values: z.infer<typeof formSchema>) {
         try {
-            setIsLoading(true)
-            fetch("/api/org/new", {
+            setCreating(true)
+            const res = await fetch("/api/org/new", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(values),
-            }).then(async (res) => {
-                if (res.ok) {
-                    const org = await res.json()
-                    router.push(`/dashboard/org/${org.slug}`)
-                } else {
-                    const errorData = await res.json()
-                    toast.custom(() => (
-                        <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
-                            <div className="flex items-center gap-2">
-                                <BadgeX />
-                                <div>
-                                    <div className="font-semibold">{errorData.error}</div>
-                                </div>
-                            </div>
-                        </div>
-                    ))
-                }
             })
+
+            if (res.ok) {
+                const org = await res.json()
+                router.push(`/dashboard/org/${org.slug}`)
+            } else {
+                const errorData = await res.json().catch(() => ({ error: "Une erreur est survenue" }))
+                toast.custom(() => (
+                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
+                        <div className="flex items-center gap-2">
+                            <BadgeX />
+                            <div className="font-semibold">{errorData.error}</div>
+                        </div>
+                    </div>
+                ))
+                setCreating(false)
+            }
         } catch (error) {
             console.error("Erreur lors de la création de l'organisation", error)
-        } finally {
-            setIsLoading(false)
+            toast.error("Impossible de créer l’organisation pour le moment.")
         }
     }
 
     return (
-        <Card className="w-full bg-accent">
+        <Card className="w-full bg-accent relative" aria-busy={disabled}>
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     <CardHeader className="border-b mt-2">
                         <CardTitle>Créer une nouvelle organisation</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-10">
+                    <CardContent className={disabled ? "pointer-events-none opacity-60 space-y-10" : "space-y-10"}>
                         <FormField
                             control={form.control}
                             name="name"
@@ -106,11 +85,9 @@ export function NewOrganizationForm() {
                                 <FormItem className="w-full">
                                     <FormLabel>Nom</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Nom de l'organisation" {...field} />
+                                        <Input placeholder="Nom de l'organisation" {...field} disabled={disabled} />
                                     </FormControl>
-                                    <FormDescription>
-                                        Quel est le nom de votre entreprise ou de votre équipe ?
-                                    </FormDescription>
+                                    <FormDescription>Quel est le nom de votre entreprise ou de votre équipe ?</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -122,7 +99,7 @@ export function NewOrganizationForm() {
                                 <FormItem className="w-full">
                                     <FormLabel><span>Type</span></FormLabel>
                                     <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Type" />
                                             </SelectTrigger>
@@ -134,9 +111,7 @@ export function NewOrganizationForm() {
                                             </SelectContent>
                                         </Select>
                                     </FormControl>
-                                    <FormDescription>
-                                        Qu’est-ce qui décrirait le mieux votre organisation ?
-                                    </FormDescription>
+                                    <FormDescription>Qu’est-ce qui décrirait le mieux votre organisation ?</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -146,40 +121,46 @@ export function NewOrganizationForm() {
                             name="plan"
                             render={({ field }) => (
                                 <FormItem className="w-full">
-                                    <FormLabel className="flex items-center justify-between">Plan<Link href="/dashboard/org/price" className="flex items-center">Tarifs <ExternalLink className="w-4 h-4 ml-1" /></Link></FormLabel>
+                                    <FormLabel className="flex items-center justify-between">
+                                        Plan
+                                        <Link href="/dashboard/org/price" className="flex items-center">
+                                            Tarifs <ExternalLink className="w-4 h-4 ml-1" />
+                                        </Link>
+                                    </FormLabel>
                                     <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Plan" />
                                             </SelectTrigger>
-                                            <SelectContent defaultValue={field.value}>
+                                            <SelectContent>
                                                 <SelectItem value="free">Gratuit - 0€/mois</SelectItem>
                                                 <SelectItem value="pro">Pro - 10€/mois</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </FormControl>
-                                    <FormDescription>
-                                        Le plan s’applique à votre nouvelle organisation.
-                                    </FormDescription>
+                                    <FormDescription>Le plan s’applique à votre nouvelle organisation.</FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
                     </CardContent>
                     <CardFooter className="flex items-center justify-between">
-                        <Button type="submit" variant={"outline"}>
-                            <Link href="/dashboard/organizations">
-                                Annuler
-                            </Link>
+                        <Button type="button" variant="outline" asChild disabled={disabled}>
+                            <Link href="/dashboard/organizations">Annuler</Link>
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
-                            {isLoading && <Spinner />}
-                            Créer l&apos;organisation
+
+                        <Button type="submit" disabled={disabled}>
+                            {disabled ? (
+                                <span className="inline-flex items-center gap-2">
+                                    <Spinner className="h-4 w-4" /> Création en cours...
+                                </span>
+                            ) : (
+                                "Créer l’organisation"
+                            )}
                         </Button>
                     </CardFooter>
                 </form>
             </Form>
         </Card>
-
     )
 }

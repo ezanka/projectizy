@@ -58,13 +58,12 @@ export function NewProjectForm({ organisationSlug }: { organisationSlug: string 
                     const project = await res.json()
                     router.push(`/dashboard/org/${organisationSlug}/project/${project.slug}`)
                 } else {
+                    setIsLoading(false)
                     console.error("Erreur lors de la création du projet")
                 }
             })
         } catch (error) {
             console.error("Erreur lors de la création du projet", error)
-        } finally {
-            setIsLoading(false)
         }
     }
 
@@ -79,6 +78,7 @@ export function NewProjectForm({ organisationSlug }: { organisationSlug: string 
                         <FormField
                             control={form.control}
                             name="name"
+                            disabled={isLoading}
                             render={({ field }) => (
                                 <FormItem className="w-full">
                                     <FormLabel>Nom</FormLabel>
@@ -94,14 +94,19 @@ export function NewProjectForm({ organisationSlug }: { organisationSlug: string 
                         />
                     </CardContent>
                     <CardFooter className="flex items-center justify-between">
-                        <Button type="submit" variant={"outline"}>
+                        <Button type="submit" variant={"outline"} disabled={isLoading}>
                             <Link href="/dashboard/organizations">
                                 Annuler
                             </Link>
                         </Button>
                         <Button type="submit" disabled={isLoading}>
-                            {isLoading && <Spinner />}
-                            Créer le projet
+                            {isLoading ? (
+                                <span className="inline-flex items-center gap-2">
+                                    <Spinner className="h-4 w-4" /> Création en cours...
+                                </span>
+                            ) : (
+                                "Créer le projet"
+                            )}
                         </Button>
                     </CardFooter>
                 </form>

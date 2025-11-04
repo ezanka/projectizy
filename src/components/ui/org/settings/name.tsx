@@ -30,6 +30,7 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
     const router = useRouter();
     const [authorized, setAuthorized] = React.useState(false);
     const [loadingAuth, setLoadingAuth] = React.useState(true);
+    const [loadingSave, setLoadingSave] = React.useState(false);
 
     React.useEffect(() => {
         const fetchOrgDetails = async () => {
@@ -70,6 +71,7 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
 
     const handleSave = async () => {
         try {
+            setLoadingSave(true);
             const response = await fetch(`/api/org/${organisationSlug}/update`, {
                 method: "PATCH",
                 headers: {
@@ -105,6 +107,7 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
                         </div>
                     </div>
                 ))
+                setLoadingSave(false);
             }
         } catch (error) {
             console.error("Error updating organization name:", error);
@@ -122,12 +125,12 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
                     <>
                         <CardContent className="flex items-center justify-between">
                             <p>Nom de l&apos;organisation</p>
-                            <Input placeholder="Nom de l'organisation" value={name} onChange={(e) => setName(e.target.value)} className="max-w-xs" />
+                            <Input placeholder="Nom de l'organisation" value={name} onChange={(e) => setName(e.target.value)} className="max-w-xs" disabled={loadingSave} />
                         </CardContent>
                         <Separator />
                         <CardContent className="flex items-center justify-between">
                             <p>Type de l&apos;organisation</p>
-                            <Select value={type || ""} onValueChange={(value) => setType(value as WorkspaceType)}>
+                            <Select value={type || ""} onValueChange={(value) => setType(value as WorkspaceType)} disabled={loadingSave}>
                                 <SelectTrigger className="w-full max-w-xs">
                                     <SelectValue placeholder="Sélectionner un type" />
                                 </SelectTrigger>
@@ -142,11 +145,17 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
                         </CardContent>
                         <Separator />
                         <CardContent className="flex items-center justify-end gap-2">
-                            <Button onClick={() => { setName(orgInfo?.name || ""); setType(orgInfo?.type || null); }} variant={"outline"} disabled={name === orgInfo?.name && type === orgInfo?.type}>
+                            <Button onClick={() => { setName(orgInfo?.name || ""); setType(orgInfo?.type || null); }} variant={"outline"} disabled={name === orgInfo?.name && type === orgInfo?.type || loadingSave}>
                                 Annuler
                             </Button>
-                            <Button onClick={handleSave} disabled={name === orgInfo?.name && type === orgInfo?.type}>
-                                Enregistrer les modifications
+                            <Button onClick={handleSave} disabled={name === orgInfo?.name && type === orgInfo?.type || loadingSave}>
+                                {loadingSave ? (
+                                    <span className="inline-flex items-center gap-2">
+                                        <Spinner className="h-4 w-4" /> Enregistrement en cours...
+                                    </span>
+                                ) : (
+                                    "Enregistrer les modifications"
+                                )}
                             </Button>
                         </CardContent>
                     </>
