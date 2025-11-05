@@ -26,17 +26,6 @@ export async function GET(
 
     const tasks = await prisma.task.findMany({
         where: { projectId: project.id },
-        select: {
-            id: true,
-            title: true,
-            description: true,
-            projectId: true,
-            assignedTo: true,
-            deadline: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-        },
     });
 
     return NextResponse.json(tasks, { status: 200 });

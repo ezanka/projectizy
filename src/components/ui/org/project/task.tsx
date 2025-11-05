@@ -13,13 +13,15 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, Plus } from "lucide-react"
+import { Archive, ArrowUpDown, Check, ChevronDown, Eye, PackageOpen, Pin, Plus, User, UserCheck, X } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
     DropdownMenu,
     DropdownMenuCheckboxItem,
     DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/src/components/ui/shadcn/dropdown-menu"
 import { Input } from "@/src/components/ui/shadcn/input"
@@ -32,7 +34,6 @@ import {
     TableRow,
 } from "@/src/components/ui/shadcn/table"
 import { ButtonGroup } from "@/src/components/ui/shadcn/button-group"
-import Link from "next/link"
 import {
     Sheet,
     SheetClose,
@@ -51,66 +52,226 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/src/components/ui/shadcn/popover"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/src/components/ui/shadcn/tooltip"
+import Link from "next/link"
+import useSWR from "swr";
+import { Task, TaskPriority, TaskStatus, TaskType } from "@prisma/client";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/src/components/ui/shadcn/select"
+import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
+import { User as UserType } from "@prisma/client"
+import { toast } from "sonner"
 
-export type Task = {
-    id: string
-    title: string
-    description: string | null
-    projectId: string
-    assignedTo: string | null
-    deadline: Date | null
-    status: "stopped" | "assigned" | "unassigned" | "inProgress" | "completed"
-    createdAt: Date
-    updatedAt: Date
-}
-
-export const columns: ColumnDef<Task>[] = [
-    {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => (
-            <div className="capitalize">{
-                row.getValue("status") === "stopped" ? "Arreté" :
-                    row.getValue("status") === "assigned" ? "Assigné" :
-                        row.getValue("status") === "unassigned" ? "Non assigné" :
-                            row.getValue("status") === "inProgress" ? "En cours" :
-                                row.getValue("status") === "completed" ? "Terminé" : ""
-            }</div>
-        ),
-    },
-    {
-        accessorKey: "title",
-        header: ({ column }) => {
-            return (
-                <Button
-                    variant="ghost"
-                    onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                >
-                    Nom
-                    <ArrowUpDown />
-                </Button>
-            )
-        },
-        cell: ({ row }) => <div className="lowercase">{row.getValue("title")}</div>,
-    },
-    {
-        accessorKey: "description",
-        header: () => <div className="text-left">Description</div>,
-        cell: ({ row }) => <div className="lowercase">{row.getValue("description")}</div>,
-    },
-]
-
-export function TasksTable({ organizationSlug, projectSlug }: { organizationSlug: string, projectSlug: string }) {
+export function TasksTable({ organizationSlug, projectSlug, user }: { organizationSlug: string, projectSlug: string, user: UserType | null }) {
     const [sorting, setSorting] = React.useState<SortingState>([])
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-        []
-    )
-    const [columnVisibility, setColumnVisibility] =
-        React.useState<VisibilityState>({})
+    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
+    const [columnFiltersMe, setColumnFiltersMe] = React.useState<boolean>(false)
+    const [columnFiltersArchived, setColumnFiltersArchived] = React.useState<boolean>(false)
+    const [columnFiltersStatus, setColumnFiltersStatus] = React.useState<string>("")
+    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [data, setData] = React.useState<Task[]>([])
     const [loading, setLoading] = React.useState(true)
     const [open, setOpen] = React.useState(false)
     const [date, setDate] = React.useState<Date | undefined>(undefined)
+
+    const [id, setId] = React.useState<string>("")
+    const [title, setTitle] = React.useState<string>("")
+    const [status, setStatus] = React.useState<TaskStatus | undefined>(undefined)
+    const [priority, setPriority] = React.useState<TaskPriority | undefined>(undefined)
+    const [type, setType] = React.useState<TaskType | undefined>(undefined)
+    const [deadline, setDeadline] = React.useState<Date | undefined>(undefined)
+    const [archived, setArchived] = React.useState<boolean>(false)
+    const [loadingSave, setLoadingSave] = React.useState<boolean>(false)
+
+    async function handleSave(e: React.FormEvent) {
+        e.preventDefault()
+        if (!title || !status || !priority || !type) return
+
+        const payload = {
+            title,
+            status,
+            priority,
+            type,
+            deadline: deadline ? deadline.toISOString() : null,
+            archived,
+        }
+
+        await toast.promise(
+            (async () => {
+                setLoadingSave(true)
+                const res = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/task/${id}/update`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                })
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}))
+                    setLoadingSave(false)
+                    throw new Error(data.error || "Impossible d’enregistrer la tâche.")
+                }
+                const updated = await res.json()
+
+                setData((prev) =>
+                    prev.map((t) =>
+                        t.id === id
+                            ? {
+                                ...t,
+                                ...updated,
+                                title: payload.title,
+                                status: payload.status,
+                                priority: payload.priority,
+                                type: payload.type,
+                                deadline: payload.deadline ?? undefined,
+                                archived: payload.archived,
+                                updatedAt: new Date().toISOString(),
+                            }
+                            : t
+                    )
+                )
+                setLoadingSave(false)
+                return "Tâche mise à jour."
+            })(),
+            { loading: "Sauvegarde…", success: (m) => m, error: (err) => err.message }
+        )
+    }
+
+    const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+    function UseUserName(userId: string | null) {
+        const { data, error, isLoading } = useSWR(
+            userId ? `/api/user/${userId}/get-user` : null,
+            fetcher
+        );
+
+        return {
+            name: data?.name ?? (error ? "Inconnu" : undefined),
+            isLoading,
+        };
+    }
+
+    const columns: ColumnDef<Task>[] = [
+        {
+            accessorKey: "priority",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Priorité
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="capitalize ml-4">{
+                row.getValue("priority") === TaskPriority.NONE ? <div className="flex items-center gap-2"><div className="w-2 h-2 border rounded-full"></div>Aucune</div> :
+                    row.getValue("priority") === TaskPriority.LOW ? <div className="flex items-center gap-2"><div className="w-2 h-2 bg-blue-300 rounded-full"></div>Basse</div> :
+                        row.getValue("priority") === TaskPriority.MEDIUM ? <div className="flex items-center gap-2"><div className="w-2 h-2 bg-orange-400 rounded-full"></div>Moyenne</div> :
+                            row.getValue("priority") === TaskPriority.HIGH ? <div className="flex items-center gap-2"><div className="w-2 h-2 bg-red-400 rounded-full"></div>Haute</div> :
+                                row.getValue("priority") === TaskPriority.URGENT ? <div className="flex items-center gap-2"><div className="w-2 h-2 bg-red-700 rounded-full"></div>Urgent</div> : ""
+            }</div>,
+        },
+        {
+            accessorKey: "title",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Nom
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="capitalize ml-4">{row.getValue("title")}</div>,
+        },
+        {
+            accessorKey: "status",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Statut
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => (
+                <div className="capitalize ml-4">{
+                    row.getValue("status") === TaskStatus.TODO ? "à faire" :
+                        row.getValue("status") === TaskStatus.IN_PROGRESS ? "en cours" :
+                            row.getValue("status") === TaskStatus.REVIEW ? "à revoir" :
+                                row.getValue("status") === TaskStatus.BLOCKED ? "Bloqué" :
+                                    row.getValue("status") === TaskStatus.DONE ? "Terminé" :
+                                        row.getValue("status") === TaskStatus.CANCELED ? "Annulé" : ""
+                }</div>
+            ),
+        },
+        {
+            accessorKey: "assignedTo",
+            header: "Assigné à",
+            cell: ({ row }) => {
+                const userId = row.getValue("assignedTo") as string | null;
+                const { name, isLoading } = UseUserName(userId);
+
+                return (
+                    <div className="capitalize">
+                        {isLoading ? "Récupération..." : name || "Personne"}
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "deadline",
+            header: () => <div className="text-left">Deadline</div>,
+            cell: ({ row }) => <div className="lowercase">{row.getValue("deadline") ? new Date(row.getValue("deadline")).toLocaleDateString() : "Pas de date limite"}</div>,
+        },
+        {
+            accessorKey: "updatedAt",
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Dernière mise à jour
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => <div className="lowercase ml-4">{new Date(row.getValue("updatedAt")).toLocaleDateString()} - {new Date(row.getValue("updatedAt")).toLocaleTimeString()}</div>,
+        },
+        {
+            accessorKey: "archived",
+            header: () => <div className="text-left">Archivé</div>,
+            cell: ({ row }) => <div className="lowercase">{row.getValue("archived") ? <Check className="text-sm text-border" /> : <X className="text-sm text-border" />}</div>,
+        },
+        {
+            id: "details",
+            enableHiding: false,
+            header: "Détails",
+            cell: ({ row }) => {
+                return (
+                    <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/task/${row.original.id}`} className="text-muted-foreground hover:text-primary">
+                        <Eye />
+                    </Link>
+
+                )
+            },
+        },
+    ]
 
     React.useEffect(() => {
 
@@ -147,17 +308,88 @@ export function TasksTable({ organizationSlug, projectSlug }: { organizationSlug
         },
     })
 
+    React.useEffect(() => {
+        if (!columnFiltersMe) {
+            table.getColumn("assignedTo")?.setFilterValue("")
+        } else {
+            table.getColumn("assignedTo")?.setFilterValue(user?.id)
+        };
+
+        if (!columnFiltersArchived) {
+            table.getColumn("archived")?.setFilterValue(undefined)
+        } else {
+            table.getColumn("archived")?.setFilterValue(false)
+        };
+
+        if (columnFiltersStatus === undefined) {
+            table.getColumn("status")?.setFilterValue(undefined)
+        } else {
+            table.getColumn("status")?.setFilterValue(columnFiltersStatus)
+        }
+
+        table.resetPageIndex();
+    }, [columnFiltersMe, columnFiltersArchived, columnFiltersStatus, user, table]);
+
     return (
         <div className="w-full">
-            <div className="flex items-center py-4 justify-between">
-                <Input
-                    placeholder="Filtrer par nom..."
-                    value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-                    onChange={(event) =>
-                        table.getColumn("title")?.setFilterValue(event.target.value)
-                    }
-                    className="max-w-sm"
-                />
+            <div className="flex items-center py-4 justify-between gap-4 sm:flex-row w-full flex-col">
+                <div className="flex items-center gap-2 w-full max-w-md">
+                    <Input
+                        placeholder="Filtrer par nom..."
+                        value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
+                        onChange={(event) =>
+                            table.getColumn("title")?.setFilterValue(event.target.value)
+                        }
+                    />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline">
+                                <Pin />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuLabel>Statut</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            {Object.values(TaskStatus).map((status) => (
+                                <DropdownMenuCheckboxItem
+                                    key={status}
+                                    className="capitalize"
+                                    onCheckedChange={() => columnFiltersStatus !== status ? setColumnFiltersStatus(status) : setColumnFiltersStatus("")}
+                                    checked={columnFiltersStatus === status}
+                                >
+                                    {status === TaskStatus.TODO ? "à faire" :
+                                        status === TaskStatus.IN_PROGRESS ? "en cours" :
+                                            status === TaskStatus.REVIEW ? "à revoir" :
+                                                status === TaskStatus.BLOCKED ? "Bloqué" :
+                                                    status === TaskStatus.DONE ? "Terminé" :
+                                                        status === TaskStatus.CANCELED ? "Annulé" : ""}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant={columnFiltersMe ? "default" : "outline"} onClick={() => setColumnFiltersMe(!columnFiltersMe)} className="">
+                                {columnFiltersMe ? <UserCheck /> : <User />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Mes assignations</p>
+                        </TooltipContent>
+                    </Tooltip>
+
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant={columnFiltersArchived ? "default" : "outline"} onClick={() => setColumnFiltersArchived(!columnFiltersArchived)} className="">
+                                {columnFiltersArchived ? <Archive /> : <PackageOpen />}
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Non archivé ?</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
                 <ButtonGroup>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -192,7 +424,7 @@ export function TasksTable({ organizationSlug, projectSlug }: { organizationSlug
                         className="border-l-0 rounded-l-none"
                         asChild
                     >
-                        <Link href={`/dashboard/new/${organizationSlug}`}>
+                        <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/new`}>
                             <Plus className="mr-2 h-4 w-4" />
                             Nouvelle tâche
                         </Link>
@@ -225,7 +457,16 @@ export function TasksTable({ organizationSlug, projectSlug }: { organizationSlug
                             table.getRowModel().rows?.length ? (
                                 table.getRowModel().rows.map((row) => (
                                     <Sheet key={row.id}>
-                                        <SheetTrigger asChild>
+                                        <SheetTrigger asChild onClick={
+                                            () => {
+                                                setId(row.original.id)
+                                                setTitle(row.original.title)
+                                                setStatus(row.original.status)
+                                                setPriority(row.original.priority)
+                                                setType(row.original.type)
+                                                setDeadline(row.original.deadline ? new Date(row.original.deadline) : undefined)
+                                                setArchived(row.original.archived)
+                                            }}>
                                             <TableRow
                                                 className="hover:cursor-pointer"
                                             >
@@ -240,50 +481,130 @@ export function TasksTable({ organizationSlug, projectSlug }: { organizationSlug
                                             </TableRow>
                                         </SheetTrigger>
                                         <SheetContent>
-                                            <SheetHeader>
-                                                <SheetTitle>{row.original.title}</SheetTitle>
-                                                <SheetDescription>
-                                                    {row.original.description}
-                                                </SheetDescription>
-                                            </SheetHeader>
-                                            <div className="grid flex-1 auto-rows-min gap-6 px-4">
-                                                <div className="grid gap-3">
-                                                    <div className="flex flex-col gap-3">
-                                                        <Label htmlFor="date" className="px-1">
-                                                            Date de fin
-                                                        </Label>
-                                                        <Popover open={open} onOpenChange={setOpen}>
-                                                            <PopoverTrigger asChild>
-                                                                <Button
-                                                                    variant="outline"
-                                                                    id="date"
-                                                                    className="justify-between font-normal"
-                                                                >
-                                                                    {date ? date.toLocaleDateString() : "Selectionner la date de fin"}
-                                                                    <ChevronDownIcon />
-                                                                </Button>
-                                                            </PopoverTrigger>
-                                                            <PopoverContent className="w-auto overflow-hidden p-0" align="start">
-                                                                <Calendar
-                                                                    mode="single"
-                                                                    selected={date}
-                                                                    captionLayout="dropdown"
-                                                                    onSelect={(date) => {
-                                                                        setDate(date)
-                                                                        setOpen(false)
-                                                                    }}
-                                                                />
-                                                            </PopoverContent>
-                                                        </Popover>
+                                            <form onSubmit={handleSave} className="h-full flex flex-col justify-between">
+                                                <SheetHeader>
+                                                    <SheetTitle>{row.original.title}</SheetTitle>
+                                                    <SheetDescription>
+                                                        Modification rapide
+                                                    </SheetDescription>
+                                                </SheetHeader>
+                                                <div className="grid flex-1 auto-rows-min gap-6 px-4">
+                                                    <div className="grid gap-3">
+                                                        <div className="flex flex-col gap-3">
+                                                            <Label htmlFor="title" className="px-1">
+                                                                Titre
+                                                            </Label>
+                                                            <Input
+                                                                id="title"
+                                                                value={title}
+                                                                onChange={(e) => setTitle(e.target.value)}
+                                                                className="w-full"
+                                                                disabled={loadingSave}
+                                                            />
+                                                            <Label htmlFor="statut" className="px-1">
+                                                                Statut
+                                                            </Label>
+                                                            <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)} disabled={loadingSave}>
+                                                                <SelectTrigger id="statut" className="w-full">
+                                                                    <SelectValue placeholder="Statut" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {Object.values(TaskStatus).map((status) => (
+                                                                        <SelectItem key={status} value={status} className="capitalize">
+                                                                            {status === TaskStatus.TODO ? "À faire" :
+                                                                                status === TaskStatus.IN_PROGRESS ? "En cours" :
+                                                                                    status === TaskStatus.REVIEW ? "À revoir" :
+                                                                                        status === TaskStatus.BLOCKED ? "Bloqué" :
+                                                                                            status === TaskStatus.DONE ? "Terminé" :
+                                                                                                status === TaskStatus.CANCELED ? "Annulé" : ""}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <Label htmlFor="priority" className="px-1">
+                                                                Priorité
+                                                            </Label>
+                                                            <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)} disabled={loadingSave}>
+                                                                <SelectTrigger id="priority" className="w-full">
+                                                                    <SelectValue placeholder="Priorité" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {Object.values(TaskPriority).map((priority) => (
+                                                                        <SelectItem key={priority} value={priority} className="capitalize">
+                                                                            {priority === TaskPriority.NONE ? "Aucune" :
+                                                                                priority === TaskPriority.LOW ? "Basse" :
+                                                                                    priority === TaskPriority.MEDIUM ? "Moyenne" :
+                                                                                        priority === TaskPriority.HIGH ? "Haute" :
+                                                                                            priority === TaskPriority.URGENT ? "Urgent" : ""}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <Label htmlFor="type" className="px-1">
+                                                                Type
+                                                            </Label>
+                                                            <Select value={type} onValueChange={(value) => setType(value as TaskType)} disabled={loadingSave}>
+                                                                <SelectTrigger id="type" className="w-full">
+                                                                    <SelectValue placeholder="Type" />
+                                                                </SelectTrigger>
+                                                                <SelectContent>
+                                                                    {Object.values(TaskType).map((type) => (
+                                                                        <SelectItem key={type} value={type} className="capitalize">
+                                                                            {type === TaskType.TASK ? "Tâche" :
+                                                                                type === TaskType.BUG ? "Bug" :
+                                                                                    type === TaskType.FEATURE ? "Fonctionnalité" :
+                                                                                        type === TaskType.CHORE ? "Nettoyage" : ""}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            <Label htmlFor="date" className="px-1">
+                                                                Date de fin
+                                                            </Label>
+                                                            <Popover open={open} onOpenChange={setOpen}>
+                                                                <PopoverTrigger asChild>
+                                                                    <Button
+                                                                        variant="outline"
+                                                                        id="date"
+                                                                        className="justify-between font-normal"
+                                                                        disabled={loadingSave}
+                                                                    >
+                                                                        {deadline ? new Date(deadline).toLocaleDateString() : "Selectionner la date de fin"}
+                                                                        <ChevronDownIcon />
+                                                                    </Button>
+                                                                </PopoverTrigger>
+                                                                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                                                                    <Calendar
+                                                                        mode="single"
+                                                                        selected={date}
+                                                                        captionLayout="dropdown"
+                                                                        onSelect={(date) => {
+                                                                            setDate(date)
+                                                                            setOpen(false)
+                                                                            setDeadline(date)
+                                                                        }}
+                                                                    />
+                                                                </PopoverContent>
+                                                            </Popover>
+                                                            <Label htmlFor="archived" className="px-1">
+                                                                Archivé
+                                                            </Label>
+                                                            <Checkbox
+                                                                id="archived"
+                                                                checked={archived}
+                                                                onCheckedChange={(checked) => setArchived(!!checked)}
+                                                                disabled={loadingSave}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <SheetFooter>
-                                                <Button type="submit">Sauvegarder</Button>
-                                                <SheetClose asChild>
-                                                    <Button variant="outline">Fermer</Button>
-                                                </SheetClose>
-                                            </SheetFooter>
+                                                <SheetFooter>
+                                                    <Button type="submit" disabled={loadingSave}>{loadingSave ? "Sauvegarde en cours..." : "Sauvegarder"}</Button>
+                                                    <SheetClose asChild>
+                                                        <Button variant="outline" disabled={loadingSave}>Fermer</Button>
+                                                    </SheetClose>
+                                                </SheetFooter>
+                                            </form>
                                         </SheetContent>
                                     </Sheet>
 
@@ -311,7 +632,10 @@ export function TasksTable({ organizationSlug, projectSlug }: { organizationSlug
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="flex items-center justify-between space-x-2 py-4">
+                <div className="text-sm text-muted-foreground">
+                    Page {table.getState().pagination.pageIndex + 1} / {table.getPageCount()} - {table.getRowModel().rows.length} / {table.getCoreRowModel().rows.length} tâche{table.getCoreRowModel().rows.length > 1 ? "s" : ""} au total
+                </div>
                 <div className="space-x-2">
                     <Button
                         variant="outline"
