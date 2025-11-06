@@ -436,51 +436,53 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                         <FieldSeparator />
                         <Field>
                             <FieldLegend>Sous-tâches</FieldLegend>
-                            {subTasks.length > 0 &&
-                                <div className="flex items-center gap-6">
-                                    <Progress value={subTasks.filter((task) => task.done).length / subTasks.length * 100} />
-                                    <p className="text-input min-w-fit">{(subTasks.filter((task) => task.done).length / subTasks.length * 100).toFixed(0)} %</p>
-                                </div>
-                            }
-                            <FieldDescription>
-                                {subTasks.filter((task) => task.done).length} sur {subTasks.length} sous-tâches terminées
-                            </FieldDescription>
-                            <div className="mt-4 space-y-2">
-                                {subTasks.length === 0 ? (
-                                    <p className="text-sm text-gray-500">Aucune sous-tâche ajoutée.</p>
-                                ) :
-                                    <ReactSortable
-                                        list={subTasks}
-                                        setList={(newOrder: SubTask[]) => {
-                                            const reindexed = newOrder.map((st, idx) => ({ ...st, orderIndex: idx }));
-                                            setSubTasks(reindexed);
-                                        }}
-                                        className="space-y-2"
-                                    >
-                                        {subTasks.map((subTask) => (
-                                            <div className="w-full flex items-center justify-between gap-3 bg-accent px-2 py-1 rounded-md border" key={subTask.id}>
-                                                <div className="flex items-center gap-2">
-                                                    <GripVertical className="cursor-grab" />
-                                                    <Checkbox
-                                                        id={`subtask-${subTask.id}`}
-                                                        checked={subTask.done}
-                                                        onCheckedChange={() => handleSubTaskChange(subTask.id)}
-                                                    />
-                                                    <Label
-                                                        htmlFor={`subtask-${subTask.id}`}
-                                                        className={subTask.done ? "line-through text-gray-500" : ""}
-                                                    >
-                                                        {subTask.title}
-                                                    </Label>
+                            {subTasks.length === 0 ? (
+                                <p className="text-sm text-gray-500 text-center">Aucune sous-tâche.</p>
+                            ) : (
+                                <>
+                                    <div className="flex items-center gap-6">
+                                        <Progress value={subTasks.filter((task) => task.done).length / subTasks.length * 100} />
+                                        <p className="text-input min-w-fit">{(subTasks.filter((task) => task.done).length / subTasks.length * 100).toFixed(0)} %</p>
+                                    </div>
+                                    <FieldDescription>
+                                        {subTasks.filter((task) => task.done).length} sur {subTasks.length} sous-tâches terminées
+                                    </FieldDescription>
+                                    <div className="mt-4 space-y-2">
+
+                                        <ReactSortable
+                                            list={subTasks}
+                                            setList={(newOrder: SubTask[]) => {
+                                                const reindexed = newOrder.map((st, idx) => ({ ...st, orderIndex: idx }));
+                                                setSubTasks(reindexed);
+                                            }}
+                                            className="space-y-2"
+                                        >
+                                            {subTasks.map((subTask) => (
+                                                <div className="w-full flex items-center justify-between gap-3 bg-accent px-2 py-1 rounded-md border" key={subTask.id}>
+                                                    <div className="flex items-center gap-2">
+                                                        <GripVertical className="cursor-grab" />
+                                                        <Checkbox
+                                                            id={`subtask-${subTask.id}`}
+                                                            checked={subTask.done}
+                                                            onCheckedChange={() => handleSubTaskChange(subTask.id)}
+                                                        />
+                                                        <Label
+                                                            htmlFor={`subtask-${subTask.id}`}
+                                                            className={subTask.done ? "line-through text-gray-500" : ""}
+                                                        >
+                                                            {subTask.title}
+                                                        </Label>
+                                                    </div>
+                                                    <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer" onClick={() => handleSubTaskDelete(subTask.id)}>
+                                                        <Trash2 width={96} height={96} />
+                                                    </Button>
                                                 </div>
-                                                <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer" onClick={() => handleSubTaskDelete(subTask.id)}>
-                                                    <Trash2 width={96} height={96} />
-                                                </Button>
-                                            </div>
-                                        ))}
-                                    </ReactSortable>
-                                }
-                            </div>
+                                            ))}
+                                        </ReactSortable>
+                                    </div>
+                                </>
+                            )
+                            }
                         </Field>
                         <Field>
                             <FieldLegend>Ajouter une sous-tâche</FieldLegend>
