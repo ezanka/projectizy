@@ -36,6 +36,7 @@ import { TaskPriority, TaskType, TaskStatus, SubTask } from "@prisma/client"
 import { Label } from "@/src/components/ui/shadcn/label"
 import { Progress } from "@/src/components/ui/shadcn/progress"
 import { ReactSortable } from "react-sortablejs";
+import { Spinner } from "@/src/components/ui/shadcn/spinner"
 
 export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: { organisationSlug: string; projectSlug: string; id: string }) {
     const router = useRouter();
@@ -65,6 +66,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
 
     const [members, setMembers] = React.useState<Array<{ id: string; name: string }>>([]);
     const [loadingMembers, setLoadingMembers] = React.useState<boolean>(true);
+    const [loadingTask, setLoadingTask] = React.useState<boolean>(true);
 
     React.useEffect(() => {
         try {
@@ -84,6 +86,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
 
     React.useEffect(() => {
         try {
+            setLoadingTask(true);
             const fetchTaskDetails = async () => {
                 const response = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/get`);
                 const data = await response.json();
@@ -104,11 +107,14 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                             return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
                         })
                 );
+                setLoadingTask(false);
             };
 
             fetchTaskDetails();
         } catch (error) {
             console.error("Failed to fetch task details:", error);
+        } finally {
+            setLoadingTask(false);
         }
     }, [organisationSlug, projectSlug, id]);
 
@@ -143,7 +149,6 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
         setSubTasks((prev) => prev.filter((st) => st.id !== targetId));
 
         const subTaskSelected = subTasks.find((st) => st.id === targetId)!;
-        console.log('Deleting subtask:', subTaskSelected);
 
         const res = await fetch(
             `/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/subtask/${subTaskSelected.id}/delete`,
@@ -256,6 +261,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                 onChange={(e) =>
                                     setFormData({ ...formData, title: e.target.value })
                                 }
+                                disabled={loadingTask}
                                 required
                             />
                         </Field>
@@ -270,6 +276,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                 onChange={(e) =>
                                     setFormData({ ...formData, description: e.target.value })
                                 }
+                                disabled={loadingTask}
                                 className="resize-none"
                             />
                         </Field>
@@ -278,7 +285,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                 <FieldLabel htmlFor="assigned-to">
                                     Assigner à
                                 </FieldLabel>
-                                <Select value={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })}>
+                                <Select value={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })} disabled={loadingMembers}>
                                     <SelectTrigger id="assigned-to" disabled={loadingMembers}>
                                         <SelectValue placeholder="Assigner à un membre" />
                                     </SelectTrigger>
@@ -310,6 +317,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                                 variant="outline"
                                                 id="date"
                                                 className="w-full justify-between font-normal"
+                                                disabled={loadingTask}
                                             >
                                                 {formData.deadline ? formData.deadline.toLocaleDateString() : "Selectionner une date"}
                                                 <ChevronDownIcon />
@@ -334,7 +342,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                 <FieldLabel htmlFor="status">
                                     Statut
                                 </FieldLabel>
-                                <Select value={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })}>
+                                <Select value={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })} disabled={loadingTask}>
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Sélectionner un statut" />
                                     </SelectTrigger>
@@ -365,7 +373,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                 <FieldLabel htmlFor="priority">
                                     Priorité
                                 </FieldLabel>
-                                <Select value={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })}>
+                                <Select value={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })} disabled={loadingTask}>
                                     <SelectTrigger id="priority">
                                         <SelectValue placeholder="Sélectionner une priorité" />
                                     </SelectTrigger>
@@ -395,7 +403,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                 <FieldLabel htmlFor="type">
                                     Type
                                 </FieldLabel>
-                                <Select value={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })}>
+                                <Select value={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })} disabled={loadingTask}>
                                     <SelectTrigger id="type">
                                         <SelectValue placeholder="Sélectionner un type" />
                                     </SelectTrigger>
@@ -423,71 +431,83 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                         </div>
                     </FieldGroup>
                 </FieldSet>
-                <FieldSeparator />
-                <Field>
-                    <FieldLegend>Sous-tâches</FieldLegend>
-                    {subTasks.length > 0 &&
-                        <div className="flex items-center gap-6">
-                            <Progress value={subTasks.filter((task) => task.done).length / subTasks.length * 100} />
-                            <p className="text-input min-w-fit">{(subTasks.filter((task) => task.done).length / subTasks.length * 100).toFixed(0)} %</p>
-                        </div>
-                    }
-                    <FieldDescription>
-                        {subTasks.filter((task) => task.done).length} sur {subTasks.length} sous-tâches terminées
-                    </FieldDescription>
-                    <div className="mt-4 space-y-2">
-                        {subTasks.length === 0 ? (
-                            <p className="text-sm text-gray-500">Aucune sous-tâche ajoutée.</p>
-                        ) :
-                            <ReactSortable
-                                list={subTasks}
-                                setList={(newOrder: SubTask[]) => {
-                                    const reindexed = newOrder.map((st, idx) => ({ ...st, orderIndex: idx }));
-                                    setSubTasks(reindexed);
-                                }}
-                                className="space-y-2"
-                            >
-                                {subTasks.map((subTask) => (
-                                    <div className="w-full flex items-center justify-between gap-3 bg-accent px-2 py-1 rounded-md border" key={subTask.id}>
-                                        <div className="flex items-center gap-2">
-                                            <GripVertical className="cursor-grab" />
-                                            <Checkbox
-                                                id={`subtask-${subTask.id}`}
-                                                checked={subTask.done}
-                                                onCheckedChange={() => handleSubTaskChange(subTask.id)}
-                                            />
-                                            <Label
-                                                htmlFor={`subtask-${subTask.id}`}
-                                                className={subTask.done ? "line-through text-gray-500" : ""}
-                                            >
-                                                {subTask.title}
-                                            </Label>
-                                        </div>
-                                        <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer" onClick={() => handleSubTaskDelete(subTask.id)}>
-                                            <Trash2 width={96} height={96} />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </ReactSortable>
-                        }
-                    </div>
-                </Field>
-                <Field>
-                    <FieldLegend>Ajouter une sous-tâche</FieldLegend>
-                    <div className="flex items-center gap-4">
-                        <Input
-                            id="title"
-                            placeholder="Sous tâche"
-                            value={subTaskTitle}
-                            onChange={(e) =>
-                                setSubTaskTitle(e.target.value)
+                {!loadingTask ? (
+                    <>
+                        <FieldSeparator />
+                        <Field>
+                            <FieldLegend>Sous-tâches</FieldLegend>
+                            {subTasks.length > 0 &&
+                                <div className="flex items-center gap-6">
+                                    <Progress value={subTasks.filter((task) => task.done).length / subTasks.length * 100} />
+                                    <p className="text-input min-w-fit">{(subTasks.filter((task) => task.done).length / subTasks.length * 100).toFixed(0)} %</p>
+                                </div>
                             }
-                        />
-                        <Button type="button" disabled={!subTaskTitle} onClick={handleAddSubTask}>
-                            Ajouter une sous-tâche
-                        </Button>
-                    </div>
-                </Field>
+                            <FieldDescription>
+                                {subTasks.filter((task) => task.done).length} sur {subTasks.length} sous-tâches terminées
+                            </FieldDescription>
+                            <div className="mt-4 space-y-2">
+                                {subTasks.length === 0 ? (
+                                    <p className="text-sm text-gray-500">Aucune sous-tâche ajoutée.</p>
+                                ) :
+                                    <ReactSortable
+                                        list={subTasks}
+                                        setList={(newOrder: SubTask[]) => {
+                                            const reindexed = newOrder.map((st, idx) => ({ ...st, orderIndex: idx }));
+                                            setSubTasks(reindexed);
+                                        }}
+                                        className="space-y-2"
+                                    >
+                                        {subTasks.map((subTask) => (
+                                            <div className="w-full flex items-center justify-between gap-3 bg-accent px-2 py-1 rounded-md border" key={subTask.id}>
+                                                <div className="flex items-center gap-2">
+                                                    <GripVertical className="cursor-grab" />
+                                                    <Checkbox
+                                                        id={`subtask-${subTask.id}`}
+                                                        checked={subTask.done}
+                                                        onCheckedChange={() => handleSubTaskChange(subTask.id)}
+                                                    />
+                                                    <Label
+                                                        htmlFor={`subtask-${subTask.id}`}
+                                                        className={subTask.done ? "line-through text-gray-500" : ""}
+                                                    >
+                                                        {subTask.title}
+                                                    </Label>
+                                                </div>
+                                                <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer" onClick={() => handleSubTaskDelete(subTask.id)}>
+                                                    <Trash2 width={96} height={96} />
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </ReactSortable>
+                                }
+                            </div>
+                        </Field>
+                        <Field>
+                            <FieldLegend>Ajouter une sous-tâche</FieldLegend>
+                            <div className="flex items-center gap-4">
+                                <Input
+                                    id="title"
+                                    placeholder="Sous tâche"
+                                    value={subTaskTitle}
+                                    onChange={(e) =>
+                                        setSubTaskTitle(e.target.value)
+                                    }
+                                />
+                                <Button type="button" disabled={!subTaskTitle} onClick={handleAddSubTask}>
+                                    Ajouter une sous-tâche
+                                </Button>
+                            </div>
+                        </Field>
+                    </>
+                ) : (
+                    <>
+                        <FieldSeparator />
+                        <div className="flex items-center justify-center w-full gap-4">
+                            <Spinner />
+                            <p>Chargement des sous-tâches...</p>
+                        </div>
+                    </>
+                )}
                 <FieldSeparator />
                 <Field orientation="horizontal" className="justify-end space-x-2">
                     <Button variant="outline" type="button" asChild>
@@ -495,9 +515,9 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                             Annuler
                         </Link>
                     </Button>
-                    <Button type="submit">Sauvegarder la tâche</Button>
+                    <Button type="submit" disabled={loadingTask}>Sauvegarder la tâche</Button>
                 </Field>
-            </FieldGroup >
-        </form >
+            </FieldGroup>
+        </form>
     )
 }

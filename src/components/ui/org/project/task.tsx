@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { Archive, ArrowUpDown, Check, ChevronDown, Eye, PackageOpen, Pin, Plus, User, UserCheck, X } from "lucide-react"
+import { Archive, ArrowUpDown, Check, ChevronDown, Eye, ListChecks, ListRestart, PackageOpen, Pin, Plus, User, UserCheck, X } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
@@ -76,7 +76,8 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
     const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
     const [columnFiltersMe, setColumnFiltersMe] = React.useState<boolean>(false)
     const [columnFiltersArchived, setColumnFiltersArchived] = React.useState<boolean>(false)
-    const [columnFiltersStatus, setColumnFiltersStatus] = React.useState<string>("")
+    const [columnFiltersStatus, setColumnFiltersStatus] = React.useState<TaskStatus[]>([])
+    const [columnFiltersStatusOpen, setColumnFiltersStatusOpen] = React.useState<boolean>(false)
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
     const [data, setData] = React.useState<Task[]>([])
     const [loading, setLoading] = React.useState(true)
@@ -197,6 +198,11 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         },
         {
             accessorKey: "status",
+            filterFn: (row, id, filterValue: TaskStatus[]) => {
+                if (!filterValue || filterValue.length === 0) return true
+                const value = row.getValue<TaskStatus>(id as "status")
+                return filterValue.includes(value)
+            },
             header: ({ column }) => {
                 return (
                     <Button
@@ -321,7 +327,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
             table.getColumn("archived")?.setFilterValue(false)
         };
 
-        if (columnFiltersStatus === undefined) {
+        if (columnFiltersStatus.length === 0) {
             table.getColumn("status")?.setFilterValue(undefined)
         } else {
             table.getColumn("status")?.setFilterValue(columnFiltersStatus)
@@ -341,7 +347,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                             table.getColumn("title")?.setFilterValue(event.target.value)
                         }
                     />
-                    <DropdownMenu>
+                    <DropdownMenu open={columnFiltersStatusOpen} onOpenChange={setColumnFiltersStatusOpen}>
                         <DropdownMenuTrigger asChild>
                             <Button variant="outline">
                                 <Pin />
@@ -350,21 +356,40 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                         <DropdownMenuContent>
                             <DropdownMenuLabel>Statut</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            {Object.values(TaskStatus).map((status) => (
-                                <DropdownMenuCheckboxItem
-                                    key={status}
-                                    className="capitalize"
-                                    onCheckedChange={() => columnFiltersStatus !== status ? setColumnFiltersStatus(status) : setColumnFiltersStatus("")}
-                                    checked={columnFiltersStatus === status}
-                                >
-                                    {status === TaskStatus.TODO ? "à faire" :
-                                        status === TaskStatus.IN_PROGRESS ? "en cours" :
-                                            status === TaskStatus.REVIEW ? "à vérifier" :
-                                                status === TaskStatus.BLOCKED ? "Bloqué" :
-                                                    status === TaskStatus.DONE ? "Terminé" :
-                                                        status === TaskStatus.CANCELED ? "Annulé" : ""}
-                                </DropdownMenuCheckboxItem>
-                            ))}
+                            <div className="px-2 py-1.5 flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => setColumnFiltersStatus([])}>
+                                    <ListRestart />
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => setColumnFiltersStatus(Object.values(TaskStatus))}>
+                                    <ListChecks />
+                                </Button>
+                            </div>
+                            <DropdownMenuSeparator />
+                            {Object.values(TaskStatus).map((s) => {
+                                const label =
+                                    s === TaskStatus.TODO ? "À faire" :
+                                        s === TaskStatus.IN_PROGRESS ? "En cours" :
+                                            s === TaskStatus.REVIEW ? "À vérifier" :
+                                                s === TaskStatus.BLOCKED ? "Bloqué" :
+                                                    s === TaskStatus.DONE ? "Terminé" :
+                                                        s === TaskStatus.CANCELED ? "Annulé" : s
+
+                                return (
+                                    <DropdownMenuCheckboxItem
+                                        key={s}
+                                        className="capitalize"
+                                        checked={columnFiltersStatus.includes(s)}
+                                        onCheckedChange={(checked) => {
+                                            setColumnFiltersStatus((prev) =>
+                                                checked ? [...prev, s] : prev.filter((x) => x !== s)
+                                            );
+                                        }}
+                                        onSelect={(e) => e.preventDefault()}
+                                    >
+                                        {label}
+                                    </DropdownMenuCheckboxItem>
+                                )
+                            })}
                         </DropdownMenuContent>
                     </DropdownMenu>
 
