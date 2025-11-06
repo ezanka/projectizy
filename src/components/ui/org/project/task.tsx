@@ -212,7 +212,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                 <div className="capitalize ml-4">{
                     row.getValue("status") === TaskStatus.TODO ? "à faire" :
                         row.getValue("status") === TaskStatus.IN_PROGRESS ? "en cours" :
-                            row.getValue("status") === TaskStatus.REVIEW ? "à revoir" :
+                            row.getValue("status") === TaskStatus.REVIEW ? "à vérifier" :
                                 row.getValue("status") === TaskStatus.BLOCKED ? "Bloqué" :
                                     row.getValue("status") === TaskStatus.DONE ? "Terminé" :
                                         row.getValue("status") === TaskStatus.CANCELED ? "Annulé" : ""
@@ -264,7 +264,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
             header: "Détails",
             cell: ({ row }) => {
                 return (
-                    <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/task/${row.original.id}`} className="text-muted-foreground hover:text-primary">
+                    <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/${row.original.id}`} className="text-muted-foreground hover:text-primary">
                         <Eye />
                     </Link>
 
@@ -359,7 +359,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                 >
                                     {status === TaskStatus.TODO ? "à faire" :
                                         status === TaskStatus.IN_PROGRESS ? "en cours" :
-                                            status === TaskStatus.REVIEW ? "à revoir" :
+                                            status === TaskStatus.REVIEW ? "à vérifier" :
                                                 status === TaskStatus.BLOCKED ? "Bloqué" :
                                                     status === TaskStatus.DONE ? "Terminé" :
                                                         status === TaskStatus.CANCELED ? "Annulé" : ""}

@@ -10,7 +10,7 @@ export async function PUT(
 ) {
     try {
         const body = await req.json();
-        const { title, status, priority, type, deadline, archived } = body ?? {};
+        const { title, status, priority, type, deadline, archived, subTasks } = body ?? {};
         const user = await getUser();
         const { id } = await params;
 
@@ -27,12 +27,29 @@ export async function PUT(
                 ...(type && { type }),
                 ...(deadline && { deadline: new Date(deadline) }),
                 ...(typeof archived === "boolean" && { archived }),
+                ...(archived && { archivedAt: new Date() }),
                 updatedAt: new Date(),
                 updatedById: user.id,
-                ...(archived && { archivedAt: new Date() }),
-                ...(archived && { archivedAt: new Date() }),
             },
         });
+
+        await Promise.all(
+            subTasks.map(async (subTask: { id: string; title: string; done: boolean }) => {
+                return await prisma.subTask.upsert({
+                    where: { id: subTask.id },
+                    update: {
+                        title: subTask.title,
+                        done: subTask.done,
+                    },
+                    create: {
+                        id: subTask.id,
+                        title: subTask.title,
+                        done: subTask.done,
+                        taskId: id,
+                    },
+                });
+            })
+        );
 
         return NextResponse.json(updatedTask, { status: 200 });
     } catch (error) {

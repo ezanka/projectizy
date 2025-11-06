@@ -25,18 +25,22 @@ import {
     PopoverTrigger,
 } from "@/src/components/ui/shadcn/popover"
 import { Calendar } from "@/src/components/ui/shadcn/calendar"
+import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
 import Link from "next/link"
 
 import React from "react"
-import { ChevronDownIcon } from "lucide-react"
+import { ChevronDownIcon, GripVertical, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { TaskPriority, TaskType, TaskStatus } from "@prisma/client"
+import { TaskPriority, TaskType, TaskStatus, SubTask } from "@prisma/client"
+import { Label } from "@/src/components/ui/shadcn/label"
+import { Progress } from "@/src/components/ui/shadcn/progress"
+import { ReactSortable } from "react-sortablejs";
 
-export default function NewTaskForm({ organisationSlug, projectSlug }: { organisationSlug: string; projectSlug: string }) {
+export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: { organisationSlug: string; projectSlug: string; id: string }) {
     const router = useRouter();
 
-    type NewTaskForm = {
+    type TaskForm = {
         title: string;
         description?: string | null;
         assignedTo?: string | null;
@@ -46,7 +50,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
         type?: TaskType | undefined;
     };
 
-    const [formData, setFormData] = React.useState<NewTaskForm>({
+    const [formData, setFormData] = React.useState<TaskForm>({
         title: "",
         description: "",
         assignedTo: null,
@@ -56,10 +60,11 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
         type: undefined,
     });
 
+    const [subTasks, setSubTasks] = React.useState<Array<SubTask>>([]);
+    const [subTaskTitle, setSubTaskTitle] = React.useState<string>("");
+
     const [members, setMembers] = React.useState<Array<{ id: string; name: string }>>([]);
     const [loadingMembers, setLoadingMembers] = React.useState<boolean>(true);
-
-    const [open, setOpen] = React.useState(false)
 
     React.useEffect(() => {
         try {
@@ -77,46 +82,172 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
         }
     }, [organisationSlug]);
 
+    React.useEffect(() => {
+        try {
+            const fetchTaskDetails = async () => {
+                const response = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/get`);
+                const data = await response.json();
+                setFormData({
+                    title: data.task.title,
+                    description: data.task.description,
+                    assignedTo: data.task.assignedTo,
+                    deadline: data.task.deadline ? new Date(data.task.deadline) : null,
+                    status: data.task.status,
+                    priority: data.task.priority,
+                    type: data.task.type,
+                });
+                setSubTasks(
+                    (data.subTasks ?? [])
+                        .slice()
+                        .sort((a: SubTask, b: SubTask) => {
+                            if (a.done !== b.done) return a.done ? 1 : -1;
+                            return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+                        })
+                );
+            };
+
+            fetchTaskDetails();
+        } catch (error) {
+            console.error("Failed to fetch task details:", error);
+        }
+    }, [organisationSlug, projectSlug, id]);
 
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
         await toast.promise(
             (async () => {
-                const res = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/task/new`, {
-                    method: "POST",
+                const res = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/update`, {
+                    method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify({ formData, subTasks }),
                 });
 
                 if (!res.ok) {
                     const data = await res.json().catch(() => ({}));
-                    throw new Error(data.error || "Une erreur est survenue lors de la création de la tâche.");
+                    throw new Error(data.error || "Une erreur est survenue lors de la sauvegarde de la tâche.");
                 }
 
                 router.push(`/dashboard/org/${organisationSlug}/project/${projectSlug}/tasks`);
-                return "Tâche créée avec succès.";
+                return "Tâche mise à jour avec succès.";
             })(),
             {
-                loading: "Création de la tâche...",
-                success: (msg) => `Tâche créée ! ${msg}`,
-                error: (err) => err.message || "Erreur lors de la création de la tâche.",
+                loading: "Mise à jour de la tâche...",
+                success: (msg) => `Tâche mise à jour ! ${msg}`,
+                error: (err) => err.message || "Erreur lors de la mise à jour de la tâche.",
             }
         );
+    }
+
+    async function handleSubTaskDelete(targetId: string): Promise<void> {
+        setSubTasks((prev) => prev.filter((st) => st.id !== targetId));
+
+        const subTaskSelected = subTasks.find((st) => st.id === targetId)!;
+        console.log('Deleting subtask:', subTaskSelected);
+
+        const res = await fetch(
+            `/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/subtask/${subTaskSelected.id}/delete`,
+            {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+            }
+        );
+
+        if (!res.ok) {
+            setSubTasks(subTasks);
+            const data = await res.json().catch(() => ({}));
+            toast.error(data.error ?? "Impossible de supprimer la sous-tâche.");
+        }
+    }
+
+    async function handleSubTaskChange(targetId: string): Promise<void> {
+        const next = subTasks
+            .map((st) => (st.id === targetId ? {
+                ...st,
+                done: !st.done,
+                doneAt: !st.done ? new Date() : null
+            } : st))
+            .sort((a, b) => {
+                if (a.done === b.done) return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+                return a.done ? 1 : -1;
+            })
+            .map((st, idx) => ({ ...st, orderIndex: idx }));
+
+        setSubTasks(next);
+
+        const updated = next.find((st) => st.id === targetId)!;
+
+        const res = await fetch(
+            `/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/subtask/${updated.id}/update`,
+            {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(updated),
+            }
+        );
+
+        if (!res.ok) {
+            setSubTasks(subTasks);
+            const data = await res.json().catch(() => ({}));
+            toast.error(data.error ?? "Impossible de mettre à jour la sous-tâche.");
+        }
+    }
+
+    async function handleAddSubTask(): Promise<void> {
+        const nextIndex = subTasks.length;
+
+        const tempId = crypto.randomUUID();
+        const newSubTask: SubTask = {
+            id: tempId,
+            title: subTaskTitle,
+            done: false,
+            taskId: id,
+            orderIndex: nextIndex,
+            doneAt: null,
+        };
+
+        setSubTasks((prev) => [...prev, newSubTask]);
+        setSubTaskTitle("");
+
+        try {
+            const res = await fetch(
+                `/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/subtask/new`,
+                {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newSubTask),
+                }
+            );
+
+            if (!res.ok) throw new Error("Erreur lors de la création");
+
+            const data = await res.json();
+
+            setSubTasks((prev) =>
+                prev.map((s) =>
+                    s.id === tempId ? { ...s, id: data.id } : s
+                )
+            );
+        } catch (error) {
+            console.error(error);
+            setSubTasks((prev) => prev.filter((s) => s.id !== tempId));
+        }
+
+        setSubTaskTitle("");
     }
 
     return (
         <form onSubmit={handleSubmit}>
             <FieldGroup>
                 <FieldSet>
-                    <FieldLegend>Crée une nouvelle tâche</FieldLegend>
+                    <FieldLegend>Détails de la tâche</FieldLegend>
                     <FieldDescription>
-                        La tâche sera visible par tout les membres du projet.
+                        La tâche est visible par tout les membres du projet.
                     </FieldDescription>
                     <FieldGroup>
                         <Field>
                             <FieldLabel htmlFor="title">
-                                Titre *
+                                Titre
                             </FieldLabel>
                             <Input
                                 id="title"
@@ -147,8 +278,8 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="assigned-to">
                                     Assigner à
                                 </FieldLabel>
-                                <Select defaultValue={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })}>
-                                    <SelectTrigger id="assigned-to">
+                                <Select value={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })}>
+                                    <SelectTrigger id="assigned-to" disabled={loadingMembers}>
                                         <SelectValue placeholder="Assigner à un membre" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -173,7 +304,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                     <FieldLabel htmlFor="deadline">
                                         Deadline
                                     </FieldLabel>
-                                    <Popover open={open} onOpenChange={setOpen}>
+                                    <Popover>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant="outline"
@@ -191,7 +322,6 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                                 captionLayout="dropdown"
                                                 onSelect={(date) => {
                                                     setFormData({ ...formData, deadline: date || undefined })
-                                                    setOpen(false)
                                                 }}
                                             />
                                         </PopoverContent>
@@ -204,7 +334,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="status">
                                     Statut
                                 </FieldLabel>
-                                <Select defaultValue={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })}>
+                                <Select value={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })}>
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Sélectionner un statut" />
                                     </SelectTrigger>
@@ -220,9 +350,9 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                                     value={status}
                                                     className="capitalize"
                                                 >
-                                                    {status === TaskStatus.TODO ? "à faire" :
-                                                        status === TaskStatus.IN_PROGRESS ? "en cours" :
-                                                            status === TaskStatus.REVIEW ? "à vérifier" :
+                                                    {status === TaskStatus.TODO ? "À faire" :
+                                                        status === TaskStatus.IN_PROGRESS ? "En cours" :
+                                                            status === TaskStatus.REVIEW ? "À revoir" :
                                                                 status === TaskStatus.BLOCKED ? "Bloqué" :
                                                                     status === TaskStatus.DONE ? "Terminé" :
                                                                         status === TaskStatus.CANCELED ? "Annulé" : ""}
@@ -235,7 +365,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="priority">
                                     Priorité
                                 </FieldLabel>
-                                <Select defaultValue={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })}>
+                                <Select value={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })}>
                                     <SelectTrigger id="priority">
                                         <SelectValue placeholder="Sélectionner une priorité" />
                                     </SelectTrigger>
@@ -265,7 +395,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="type">
                                     Type
                                 </FieldLabel>
-                                <Select defaultValue={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })}>
+                                <Select value={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })}>
                                     <SelectTrigger id="type">
                                         <SelectValue placeholder="Sélectionner un type" />
                                     </SelectTrigger>
@@ -294,13 +424,78 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                     </FieldGroup>
                 </FieldSet>
                 <FieldSeparator />
+                <Field>
+                    <FieldLegend>Sous-tâches</FieldLegend>
+                    {subTasks.length > 0 &&
+                        <div className="flex items-center gap-6">
+                            <Progress value={subTasks.filter((task) => task.done).length / subTasks.length * 100} />
+                            <p className="text-input min-w-fit">{(subTasks.filter((task) => task.done).length / subTasks.length * 100).toFixed(0)} %</p>
+                        </div>
+                    }
+                    <FieldDescription>
+                        {subTasks.filter((task) => task.done).length} sur {subTasks.length} sous-tâches terminées
+                    </FieldDescription>
+                    <div className="mt-4 space-y-2">
+                        {subTasks.length === 0 ? (
+                            <p className="text-sm text-gray-500">Aucune sous-tâche ajoutée.</p>
+                        ) :
+                            <ReactSortable
+                                list={subTasks}
+                                setList={(newOrder: SubTask[]) => {
+                                    const reindexed = newOrder.map((st, idx) => ({ ...st, orderIndex: idx }));
+                                    setSubTasks(reindexed);
+                                }}
+                                className="space-y-2"
+                            >
+                                {subTasks.map((subTask) => (
+                                    <div className="w-full flex items-center justify-between gap-3 bg-accent px-2 py-1 rounded-md border" key={subTask.id}>
+                                        <div className="flex items-center gap-2">
+                                            <GripVertical className="cursor-grab" />
+                                            <Checkbox
+                                                id={`subtask-${subTask.id}`}
+                                                checked={subTask.done}
+                                                onCheckedChange={() => handleSubTaskChange(subTask.id)}
+                                            />
+                                            <Label
+                                                htmlFor={`subtask-${subTask.id}`}
+                                                className={subTask.done ? "line-through text-gray-500" : ""}
+                                            >
+                                                {subTask.title}
+                                            </Label>
+                                        </div>
+                                        <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer" onClick={() => handleSubTaskDelete(subTask.id)}>
+                                            <Trash2 width={96} height={96} />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </ReactSortable>
+                        }
+                    </div>
+                </Field>
+                <Field>
+                    <FieldLegend>Ajouter une sous-tâche</FieldLegend>
+                    <div className="flex items-center gap-4">
+                        <Input
+                            id="title"
+                            placeholder="Sous tâche"
+                            value={subTaskTitle}
+                            onChange={(e) =>
+                                setSubTaskTitle(e.target.value)
+                            }
+                        />
+                        <Button type="button" disabled={!subTaskTitle} onClick={handleAddSubTask}>
+                            Ajouter une sous-tâche
+                        </Button>
+                    </div>
+                </Field>
+                <FieldSeparator />
                 <Field orientation="horizontal" className="justify-end space-x-2">
                     <Button variant="outline" type="button" asChild>
                         <Link href={`/dashboard/org/${organisationSlug}/project/${projectSlug}/tasks`}>
                             Annuler
                         </Link>
                     </Button>
-                    <Button type="submit">Créer la tâche</Button>
+                    <Button type="submit">Sauvegarder la tâche</Button>
                 </Field>
             </FieldGroup >
         </form >

@@ -26,6 +26,8 @@ model User {
   createdTasks  Task[]     @relation("TaskCreatedBy")
   updatedTasks  Task[]     @relation("TaskUpdatedBy")
   files         File[]     @relation("FileOwner")
+  comments      Comment[]
+  taskLogs      TaskLog[]
 
   @@unique([email])
   @@map("user")
@@ -213,6 +215,20 @@ enum TaskType {
     CHORE
 }
 
+model Comment {
+    id         String   @id @default(cuid())
+    taskId     String
+    authorId   String
+    body       String   @db.Text
+    createdAt  DateTime @default(now())
+    editedAt   DateTime?
+
+    task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    author     User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+    @@index([taskId, createdAt])
+}
+
 model Task {
     id          String   @id @default(cuid())
 
@@ -237,6 +253,8 @@ model Task {
 
     deadline    DateTime?
 
+    progress    Int?       @default(0)
+
     createdAt   DateTime @default(now())
     createdById     String?
     createdBy       User?        @relation("TaskCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
@@ -245,11 +263,42 @@ model Task {
     updatedById     String?
     updatedBy       User?        @relation("TaskUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
+    comments    Comment[]
+    taskLogs    TaskLog[]
+    subTasks    SubTask[]
 
     @@index([projectId])
     @@index([status, priority])
     @@index([dueAt])
     @@unique([projectId, slug], map: "task_project_slug_unique")
+}
+
+model TaskLog {
+    id        String   @id @default(cuid())
+    taskId    String
+    userId    String
+    minutes   Int
+    note      String?
+    startedAt DateTime @default(now())
+
+    task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([taskId, startedAt])
+    @@index([userId, startedAt])
+}
+
+model SubTask {
+    id        String   @id @default(cuid())
+    taskId    String
+    title     String
+    done      Boolean  @default(false)
+    orderIndex Int     @default(0)
+    doneAt    DateTime?
+
+    task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+    @@index([taskId, orderIndex])
 }
 
 enum ProviderName {
