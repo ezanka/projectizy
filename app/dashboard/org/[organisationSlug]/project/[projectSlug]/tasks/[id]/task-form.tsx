@@ -113,8 +113,6 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
             fetchTaskDetails();
         } catch (error) {
             console.error("Failed to fetch task details:", error);
-        } finally {
-            setLoadingTask(false);
         }
     }, [organisationSlug, projectSlug, id]);
 
