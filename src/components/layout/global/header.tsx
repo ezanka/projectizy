@@ -23,7 +23,7 @@ export default async function Header() {
     }
 
     return (
-        <header className="w-full border-b bg-sidebar z-10">
+        <header className="fixed top-0 left-0 right-0 w-full border-b bg-sidebar z-10">
             <div className="flex h-16 items-center px-4">
                 <div className="flex flex-1 items-center justify-between">
                     <HeaderPath />

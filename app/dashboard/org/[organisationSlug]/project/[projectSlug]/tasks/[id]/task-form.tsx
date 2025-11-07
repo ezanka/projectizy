@@ -75,12 +75,11 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                 const response = await fetch(`/api/org/${organisationSlug}/get-org-users`);
                 const data = await response.json();
                 setMembers(data);
+                setLoadingMembers(false);
             };
             fetchMembers();
         } catch (error) {
             console.error("Failed to fetch members:", error);
-        } finally {
-            setLoadingMembers(false);
         }
     }, [organisationSlug]);
 
@@ -289,7 +288,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                     </SelectTrigger>
                                     <SelectContent>
                                         {loadingMembers ? (
-                                            <SelectItem value="">
+                                            <SelectItem value="Aucun">
                                                 Récupération des membres...
                                             </SelectItem>
                                         ) : (
@@ -300,7 +299,8 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                                 >
                                                     {member.name}
                                                 </SelectItem>
-                                            )))}
+                                            ))
+                                        )}
                                     </SelectContent>
                                 </Select>
                             </Field>
@@ -345,12 +345,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                         <SelectValue placeholder="Sélectionner un statut" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {loadingMembers ? (
-                                            <SelectItem value="">
-                                                Récupération des membres...
-                                            </SelectItem>
-                                        ) : (
-                                            Object.values(TaskStatus).map((status) => (
+                                        {Object.values(TaskStatus).map((status) => (
                                                 <SelectItem
                                                     key={status}
                                                     value={status}
@@ -363,7 +358,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                                                     status === TaskStatus.DONE ? "Terminé" :
                                                                         status === TaskStatus.CANCELED ? "Annulé" : ""}
                                                 </SelectItem>
-                                            )))}
+                                            ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
@@ -376,12 +371,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                         <SelectValue placeholder="Sélectionner une priorité" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {loadingMembers ? (
-                                            <SelectItem value="">
-                                                Récupération des membres...
-                                            </SelectItem>
-                                        ) : (
-                                            Object.values(TaskPriority).map((priority) => (
+                                            {Object.values(TaskPriority).map((priority) => (
                                                 <SelectItem
                                                     key={priority}
                                                     value={priority}
@@ -393,7 +383,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                                                 priority === TaskPriority.HIGH ? "Haute" :
                                                                     priority === TaskPriority.URGENT ? "Urgent" : ""}
                                                 </SelectItem>
-                                            )))}
+                                            ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
@@ -406,12 +396,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                         <SelectValue placeholder="Sélectionner un type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {loadingMembers ? (
-                                            <SelectItem value="">
-                                                Récupération des membres...
-                                            </SelectItem>
-                                        ) : (
-                                            Object.values(TaskType).map((type) => (
+                                        {Object.values(TaskType).map((type) => (
                                                 <SelectItem
                                                     key={type}
                                                     value={type}
@@ -422,7 +407,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                                             type === TaskType.FEATURE ? "Fonctionnalité" :
                                                                 type === TaskType.CHORE ? "Nettoyage" : ""}
                                                 </SelectItem>
-                                            )))}
+                                            ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
