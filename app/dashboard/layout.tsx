@@ -21,7 +21,7 @@ export default async function LogedLayout({
 
     return (
         <SidebarProvider defaultOpen={defaultOpen}>              
-            <div className="flex min-h-screen w-full flex-col bg-sidebar text-foreground">
+            <div className="flex min-h-screen w-full flex-col bg-sidebar text-foreground mt-12">
                 <Header />
                 {children}
             </div>
