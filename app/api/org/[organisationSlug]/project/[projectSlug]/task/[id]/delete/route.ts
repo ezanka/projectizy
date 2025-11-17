@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
 
-type Params = { id: string; subTaskId: string };
+type Params = { id: string };
 
 export async function DELETE(
     req: Request,
@@ -10,27 +10,19 @@ export async function DELETE(
 ) {
     try {
         const user = await getUser();
-        const { id, subTaskId } = await params;
+        const { id } = await params;
 
         if (!user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const deletedSubTask = await prisma.subTask.delete({
+        const deletedTask = await prisma.task.delete({
             where: { 
-                id: subTaskId,
-                taskId: id,
+                id: id,
             },
         });
 
-        await prisma.task.update({
-            where: { id: id },
-            data: {
-                updatedAt: new Date(),
-            },
-        });
-
-        return NextResponse.json(deletedSubTask, { status: 200 });
+        return NextResponse.json(deletedTask, { status: 200 });
     } catch (error) {
         console.error("Error updating task:", error);
         return NextResponse.json({ error: "Invalid request" }, { status: 400 });

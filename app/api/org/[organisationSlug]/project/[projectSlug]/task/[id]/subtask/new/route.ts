@@ -30,6 +30,13 @@ export async function POST(
             },
         });
 
+        await prisma.task.update({
+            where: { id: id },
+            data: {
+                updatedAt: new Date(),
+            },
+        });
+
         return NextResponse.json(created, { status: 201 });
     } catch {
         return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });

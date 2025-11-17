@@ -10,7 +10,7 @@ export async function PUT(
 ) {
     try {
         const body = await req.json();
-        const { title, status, priority, type, deadline, archived, subTasks } = body ?? {};
+        const { title, description, assignedTo, deadline, status, priority, type, archived, subTasks } = body ?? {};
         const user = await getUser();
         const { id } = await params;
 
@@ -22,10 +22,12 @@ export async function PUT(
             where: { id: id },
             data: { 
                 ...(title && { title }),
+                ...(description !== undefined && { description }),
+                ...(assignedTo !== undefined && { assignedTo }),
+                ...(deadline && { deadline: new Date(deadline) }),
                 ...(status && { status }),
                 ...(priority && { priority }),
                 ...(type && { type }),
-                ...(deadline && { deadline: new Date(deadline) }),
                 ...(typeof archived === "boolean" && { archived }),
                 ...(archived && { archivedAt: new Date() }),
                 updatedAt: new Date(),
@@ -33,23 +35,25 @@ export async function PUT(
             },
         });
 
-        await Promise.all(
-            subTasks.map(async (subTask: { id: string; title: string; done: boolean }) => {
-                return await prisma.subTask.upsert({
-                    where: { id: subTask.id },
-                    update: {
-                        title: subTask.title,
-                        done: subTask.done,
-                    },
-                    create: {
-                        id: subTask.id,
-                        title: subTask.title,
-                        done: subTask.done,
-                        taskId: id,
-                    },
-                });
-            })
-        );
+        if (subTasks && Array.isArray(subTasks)) {
+            await Promise.all(
+                subTasks.map(async (subTask: { id: string; title: string; done: boolean }) => {
+                    return await prisma.subTask.upsert({
+                        where: { id: subTask.id },
+                        update: {
+                            title: subTask.title,
+                            done: subTask.done,
+                        },
+                        create: {
+                            id: subTask.id,
+                            title: subTask.title,
+                            done: subTask.done,
+                            taskId: id,
+                        },
+                    });
+                })
+            );
+        }
 
         return NextResponse.json(updatedTask, { status: 200 });
     } catch (error) {

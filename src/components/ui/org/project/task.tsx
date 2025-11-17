@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { Archive, ArrowUpDown, Check, ChevronDown, Eye, ListChecks, ListRestart, PackageOpen, Pin, Plus, User, UserCheck, X } from "lucide-react"
+import { Archive, ArrowUpDown, Check, ChevronDown, Eye, ListChecks, ListRestart, PackageOpen, Pin, Plus, RefreshCw, User, UserCheck, X } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
@@ -161,6 +161,48 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
 
     const columns: ColumnDef<Task>[] = [
         {
+            id: "details",
+            enableHiding: false,
+            header: "Détails",
+            cell: ({ row }) => {
+                return (
+                    <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/${row.original.id}`} className="text-muted-foreground hover:text-primary">
+                        <Eye className="ml-3" />
+                    </Link>
+
+                )
+            },
+        },
+        {
+            accessorKey: "status",
+            filterFn: (row, id, filterValue: TaskStatus[]) => {
+                if (!filterValue || filterValue.length === 0) return true
+                const value = row.getValue<TaskStatus>(id as "status")
+                return filterValue.includes(value)
+            },
+            header: ({ column }) => {
+                return (
+                    <Button
+                        variant="ghost"
+                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                    >
+                        Statut
+                        <ArrowUpDown />
+                    </Button>
+                )
+            },
+            cell: ({ row }) => (
+                <div className="capitalize ml-4">{
+                    row.getValue("status") === TaskStatus.TODO ? "à faire" :
+                        row.getValue("status") === TaskStatus.IN_PROGRESS ? "en cours" :
+                            row.getValue("status") === TaskStatus.REVIEW ? "à vérifier" :
+                                row.getValue("status") === TaskStatus.BLOCKED ? "Bloqué" :
+                                    row.getValue("status") === TaskStatus.DONE ? "Terminé" :
+                                        row.getValue("status") === TaskStatus.CANCELED ? "Annulé" : ""
+                }</div>
+            ),
+        },
+        {
             accessorKey: "priority",
             header: ({ column }) => {
                 return (
@@ -195,35 +237,6 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                 )
             },
             cell: ({ row }) => <div className="capitalize ml-4">{row.getValue("title")}</div>,
-        },
-        {
-            accessorKey: "status",
-            filterFn: (row, id, filterValue: TaskStatus[]) => {
-                if (!filterValue || filterValue.length === 0) return true
-                const value = row.getValue<TaskStatus>(id as "status")
-                return filterValue.includes(value)
-            },
-            header: ({ column }) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                    >
-                        Statut
-                        <ArrowUpDown />
-                    </Button>
-                )
-            },
-            cell: ({ row }) => (
-                <div className="capitalize ml-4">{
-                    row.getValue("status") === TaskStatus.TODO ? "à faire" :
-                        row.getValue("status") === TaskStatus.IN_PROGRESS ? "en cours" :
-                            row.getValue("status") === TaskStatus.REVIEW ? "à vérifier" :
-                                row.getValue("status") === TaskStatus.BLOCKED ? "Bloqué" :
-                                    row.getValue("status") === TaskStatus.DONE ? "Terminé" :
-                                        row.getValue("status") === TaskStatus.CANCELED ? "Annulé" : ""
-                }</div>
-            ),
         },
         {
             accessorKey: "assignedTo",
@@ -264,23 +277,22 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
             header: () => <div className="text-left">Archivé</div>,
             cell: ({ row }) => <div className="lowercase">{row.getValue("archived") ? <Check className="text-sm text-border" /> : <X className="text-sm text-border" />}</div>,
         },
-        {
-            id: "details",
-            enableHiding: false,
-            header: "Détails",
-            cell: ({ row }) => {
-                return (
-                    <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/${row.original.id}`} className="text-muted-foreground hover:text-primary">
-                        <Eye />
-                    </Link>
-
-                )
-            },
-        },
     ]
 
-    React.useEffect(() => {
+    const reFetchData = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-tasks`);
+            const tasks = await response.json();
+            setData(tasks);
+        } catch (error) {
+            console.error('Error fetching tasks:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    React.useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             try {
@@ -321,8 +333,8 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
             table.getColumn("assignedTo")?.setFilterValue(user?.id)
         };
 
-        if (!columnFiltersArchived) {
-            table.getColumn("archived")?.setFilterValue(undefined)
+        if (columnFiltersArchived) {
+            table.getColumn("archived")?.setFilterValue(true)
         } else {
             table.getColumn("archived")?.setFilterValue(false)
         };
@@ -335,6 +347,11 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
 
         table.resetPageIndex();
     }, [columnFiltersMe, columnFiltersArchived, columnFiltersStatus, user, table]);
+
+    React.useEffect(() => {
+        table.resetPageIndex();
+        table.setSorting([{ id: "updatedAt", desc: true }]);
+    }, [table]);
 
     return (
         <div className="w-full">
@@ -407,13 +424,23 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button variant={columnFiltersArchived ? "default" : "outline"} onClick={() => setColumnFiltersArchived(!columnFiltersArchived)} className="">
-                                {columnFiltersArchived ? <Archive /> : <PackageOpen />}
+                                {columnFiltersArchived ? <PackageOpen /> : <Archive />}
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Non archivé ?</p>
+                            <p>Archivé</p>
                         </TooltipContent>
                     </Tooltip>
+
+                    <Button variant="outline" onClick={() => {
+                        table.resetColumnFilters();
+                        setColumnFiltersMe(false);
+                        setColumnFiltersArchived(false);
+                        setColumnFiltersStatus([]);
+                        reFetchData();
+                    }}>
+                        <RefreshCw />
+                    </Button>
                 </div>
                 <ButtonGroup>
                     <DropdownMenu>
@@ -538,7 +565,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                                         <SelectItem key={status} value={status} className="capitalize">
                                                                             {status === TaskStatus.TODO ? "À faire" :
                                                                                 status === TaskStatus.IN_PROGRESS ? "En cours" :
-                                                                                    status === TaskStatus.REVIEW ? "À revoir" :
+                                                                                    status === TaskStatus.REVIEW ? "À vérifier" :
                                                                                         status === TaskStatus.BLOCKED ? "Bloqué" :
                                                                                             status === TaskStatus.DONE ? "Terminé" :
                                                                                                 status === TaskStatus.CANCELED ? "Annulé" : ""}
