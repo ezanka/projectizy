@@ -18,19 +18,36 @@ import {
 } from "@/src/components/ui/shadcn/select"
 import { BadgeX, ExternalLink } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import React from "react"
 import { Spinner } from "../../shadcn/spinner"
 import { toast } from "sonner"
 
 const formSchema = z.object({
     name: z.string().min(2, { message: "Le nom doit comporter au moins 2 caractères." }),
     type: z.enum(["personal", "education", "company", "other"]),
-    plan: z.enum(["free", "pro"]),
+    plan: z.enum(["free", "pro", "onDemand"]),
 })
+
+const allowedPlansByType: Record<z.infer<typeof formSchema>["type"], { value: z.infer<typeof formSchema>["plan"]; label: string }[]> = {
+    personal: [
+        { value: "free", label: "Gratuit - 0€/mois" },
+        { value: "pro", label: "Pro - 10€/mois" },
+    ],
+    company: [
+        { value: "pro", label: "Pro - 10€/mois" },
+        { value: "onDemand", label: "À la demande" },
+    ],
+    education: [
+        { value: "onDemand", label: "À la demande" },
+    ],
+    other: [
+        { value: "onDemand", label: "À la demande" },
+    ],
+}
 
 export function NewOrganizationForm() {
     const router = useRouter()
-    const [creating, setCreating] = useState(false)
+    const [creating, setCreating] = React.useState<boolean>(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -68,6 +85,17 @@ export function NewOrganizationForm() {
             toast.error("Impossible de créer l’organisation pour le moment.")
         }
     }
+
+    const selectedType = form.watch("type")
+
+    React.useEffect(() => {
+        const allowedPlans = allowedPlansByType[selectedType]
+        const currentPlan = form.getValues("plan")
+
+        if (!allowedPlans.some(p => p.value === currentPlan)) {
+            form.setValue("plan", allowedPlans[0].value, { shouldValidate: true })
+        }
+    }, [selectedType, form])
 
     return (
         <Card className="w-full bg-accent relative" aria-busy={disabled}>
@@ -119,29 +147,40 @@ export function NewOrganizationForm() {
                         <FormField
                             control={form.control}
                             name="plan"
-                            render={({ field }) => (
-                                <FormItem className="w-full">
-                                    <FormLabel className="flex items-center justify-between">
-                                        Plan
-                                        <Link href="/dashboard/org/price" className="flex items-center">
-                                            Tarifs <ExternalLink className="w-4 h-4 ml-1" />
-                                        </Link>
-                                    </FormLabel>
-                                    <FormControl>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Plan" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="free">Gratuit - 0€/mois</SelectItem>
-                                                <SelectItem value="pro">Pro - 10€/mois</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </FormControl>
-                                    <FormDescription>Le plan s’applique à votre nouvelle organisation.</FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            render={({ field }) => {
+                                const planOptions = allowedPlansByType[selectedType]
+
+                                return (
+                                    <FormItem className="w-full">
+                                        <FormLabel className="flex items-center justify-between">
+                                            Plan
+                                            <Link href="/dashboard/org/price" className="flex items-center">
+                                                Tarifs <ExternalLink className="w-4 h-4 ml-1" />
+                                            </Link>
+                                        </FormLabel>
+                                        <FormControl>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                                disabled={disabled}
+                                            >
+                                                <SelectTrigger className="w-full">
+                                                    <SelectValue placeholder="Plan" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {planOptions.map((plan) => (
+                                                        <SelectItem key={plan.value} value={plan.value}>
+                                                            {plan.label}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormControl>
+                                        <FormDescription>Le plan s’applique à votre nouvelle organisation.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )
+                            }}
                         />
                     </CardContent>
                     <CardFooter className="flex items-center justify-between">
