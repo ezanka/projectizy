@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, ChevronsRight, Folders, Users, LayoutDashboard, Files, NotepadText, Activity, Github, Figma, ShieldUser } from "lucide-react"
+import { Settings, ChevronsRight, Folders, Users, LayoutDashboard, NotepadText, Activity, Github, Figma, ShieldUser } from "lucide-react"
 import { useState } from "react"
 import {
     Sidebar,
@@ -27,7 +27,6 @@ export function ProjectSidebar() {
     const items = [
         { title: "Aperçu", url: `/dashboard/org/${organisationSlug}/project/${projectSlug}`, icon: LayoutDashboard },
         { title: "Tâches", url: `/dashboard/org/${organisationSlug}/project/${projectSlug}/tasks`, icon: NotepadText },
-        { title: "Fichiers", url: `/dashboard/org/${organisationSlug}/project/${projectSlug}/files`, icon: Files },
         { title: "Activités", url: `/dashboard/org/${organisationSlug}/project/${projectSlug}/activities`, icon: Activity },
     ]
 
