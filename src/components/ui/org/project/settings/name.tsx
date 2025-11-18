@@ -55,7 +55,7 @@ export default function ProjectNameSettings({ organisationSlug, projectSlug }: {
         };
 
         checkAuthorization();
-    }, [organisationSlug]);
+    }, [organisationSlug, projectSlug]);
 
     const handleSave = async () => {
         try {
