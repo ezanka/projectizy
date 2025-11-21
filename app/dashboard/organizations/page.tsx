@@ -30,8 +30,13 @@ export default function OrgPage() {
     return (
         <div className="p-8 max-w-6xl mx-auto w-full">
             <div className="flex items-center justify-between mb-8">
-                <h1 className="text-2xl font-bold">Listes des organisations</h1>
-                <Button asChild>
+                <h1 className="text-2xl font-bold">Vos organisations</h1>
+                <Button asChild className="hidden sm:flex">
+                    <Link href="/dashboard/organizations/new">
+                        Créer une organisation
+                    </Link>
+                </Button>
+                <Button asChild className="fixed bottom-4 right-4 sm:hidden">
                     <Link href="/dashboard/organizations/new">
                         Créer une organisation
                     </Link>
@@ -46,14 +51,14 @@ export default function OrgPage() {
                     </>
                 ) : (
                     workspaces.map((workspace) => (
-                        <Card key={workspace.id} className="bg-accent hover:bg-accent/90 transition h-24">
-                            <Link href={`/dashboard/org/${workspace.slug}`} className="block">
+                        <Link key={workspace.id}href={`/dashboard/org/${workspace.slug}`} className="block h-full">
+                            <Card className="bg-accent hover:bg-accent/90 transition h-24">
                                 <CardHeader>
                                     <CardTitle className="text-md">{workspace.name}</CardTitle>
                                     <CardDescription>{workspace.type} - {workspace._count.projects} projet</CardDescription>
                                 </CardHeader>
-                            </Link>
-                        </Card>
+                            </Card>
+                        </Link>
                     ))
                 )}
             </div>

@@ -46,7 +46,7 @@ export default async function Header() {
                                 <AvatarFallback>{user?.name ? user.name.charAt(0) : "U"}</AvatarFallback>
                             </Avatar>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-xs">
+                        <DropdownMenuContent className="w-xs mx-2">
                             <DropdownMenuLabel>
                                 <div className="flex flex-col space-y-1">
                                     <p className="text-sm font-medium leading-none">{user?.name}</p>

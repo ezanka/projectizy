@@ -98,8 +98,7 @@ export function NewOrganizationForm() {
     }, [selectedType, form])
 
     return (
-        <Card className="w-full bg-accent relative" aria-busy={disabled}>
-
+        <Card className="w-full bg-accent relative m-8" aria-busy={disabled}>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                     <CardHeader className="border-b mt-2">

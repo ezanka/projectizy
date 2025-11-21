@@ -129,56 +129,58 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
 
     return (
         <div className="w-full">
-            <div className="flex items-center py-4 justify-between">
+            <div className="flex flex-col sm:flex-row items-center py-4 justify-between gap-4">
                 <Input
                     placeholder="Filtrer par nom..."
                     value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
                     onChange={(event) =>
                         table.getColumn("name")?.setFilterValue(event.target.value)
                     }
-                    className="max-w-sm"
+                    className="w-full sm:max-w-sm"
                 />
-                <ButtonGroup>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="ml-auto">
-                                Colonnes <ChevronDown />
-                            </Button>
+                <div className="w-full flex justify-end">
+                    <ButtonGroup>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="ml-auto">
+                                    Colonnes <ChevronDown />
+                                </Button>
 
 
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            {table
-                                .getAllColumns()
-                                .filter((column) => column.getCanHide())
-                                .map((column) => {
-                                    return (
-                                        <DropdownMenuCheckboxItem
-                                            key={column.id}
-                                            className="capitalize"
-                                            checked={column.getIsVisible()}
-                                            onCheckedChange={(value) =>
-                                                column.toggleVisibility(!!value)
-                                            }
-                                        >
-                                            {column.id}
-                                        </DropdownMenuCheckboxItem>
-                                    )
-                                })}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button
-                        variant="outline"
-                        className="border-l-0 rounded-l-none"
-                        asChild
-                    >
-                        <Link href={`/dashboard/new/${organizationSlug}`}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nouveau projet
-                        </Link>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {table
+                                    .getAllColumns()
+                                    .filter((column) => column.getCanHide())
+                                    .map((column) => {
+                                        return (
+                                            <DropdownMenuCheckboxItem
+                                                key={column.id}
+                                                className="capitalize"
+                                                checked={column.getIsVisible()}
+                                                onCheckedChange={(value) =>
+                                                    column.toggleVisibility(!!value)
+                                                }
+                                            >
+                                                {column.id}
+                                            </DropdownMenuCheckboxItem>
+                                        )
+                                    })}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button
+                            variant="outline"
+                            className="border-l-0 rounded-l-none"
+                            asChild
+                        >
+                            <Link href={`/dashboard/new/${organizationSlug}`}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Nouveau projet
+                            </Link>
 
-                    </Button>
-                </ButtonGroup>
+                        </Button>
+                    </ButtonGroup>
+                </div>
             </div>
             <div className="overflow-hidden rounded-md border">
                 <Table>
