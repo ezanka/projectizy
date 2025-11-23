@@ -160,14 +160,12 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
     async function updateTask(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
 
-        console.log({ formData, subTasks });
-
         await toast.promise(
             (async () => {
                 const res = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/task/${id}/update`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ formData, subTasks }),
+                    body: JSON.stringify({ title: formData.title, description: formData.description, assignedTo: formData.assignedTo, deadline: formData.deadline, status: formData.status, priority: formData.priority, type: formData.type, archived: formData.archived, subTasks }),
                 });
 
                 if (!res.ok) {

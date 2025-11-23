@@ -329,6 +329,8 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
             });
 
             if (response.ok) {
+                setInvitatingLoading(false);
+                setEmail("");
                 toast.custom(() => (
                     <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
                         <div className="flex items-center gap-2">
