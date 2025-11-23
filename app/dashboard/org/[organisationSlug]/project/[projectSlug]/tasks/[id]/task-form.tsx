@@ -209,7 +209,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                 headers: { "Content-Type": "application/json" },
             }
         );
-        
+
 
         if (!res.ok) {
             setLoadingDelete(false);
@@ -584,16 +584,19 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                             </Field>
                         </div>
                         <Field>
-                            <div className="flex items-center gap-2">
-                                <Checkbox
-                                    id="archived"
-                                    checked={archived}
-                                    onCheckedChange={(checked) => setArchived(!!checked)}
-                                    disabled={loadingTask}
-                                />
-                                <Label htmlFor="archived">
-                                    Archiver cette tâche
-                                </Label>
+                            <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-4">
+                                    <Checkbox
+                                        id="archived"
+                                        checked={archived}
+                                        onCheckedChange={(checked) => setArchived(!!checked)}
+                                        disabled={loadingTask}
+                                    />
+                                    <Label htmlFor="archived">
+                                        Archiver cette tâche
+                                    </Label>
+                                </div>
+                                <p className="text-muted-foreground text-xs">Les tâches archivées ne compteront plus dans la progression globale.</p>
                             </div>
                             <p>
                                 {archived && formData.archiveAt

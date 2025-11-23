@@ -423,7 +423,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <DialogTrigger asChild>
-                                            <Button className="rounded-l-none hover:bg-primary/80 transition-all cursor-pointer">
+                                            <Button variant={"outline"} className="rounded-l-none hover:bg-primary/80 transition-all cursor-pointer">
                                                 <Plus className="mr-2 h-4 w-4" />
                                                 Nouveau membre
                                             </Button>
@@ -439,6 +439,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                         <span className="inline-flex">
                                             <Button
                                                 disabled
+                                                variant={"outline"}
                                                 className="rounded-l-none transition-all cursor-not-allowed"
                                             >
                                                 <Plus className="mr-2 h-4 w-4" />

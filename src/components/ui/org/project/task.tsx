@@ -647,6 +647,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                                 onCheckedChange={(checked) => setArchived(!!checked)}
                                                                 disabled={loadingSave}
                                                             />
+                                                            <p className="text-muted-foreground text-xs">Les tâches archivées ne compteront plus dans la progression globale.</p>
                                                         </div>
                                                     </div>
                                                 </div>

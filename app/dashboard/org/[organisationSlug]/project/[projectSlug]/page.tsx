@@ -1,8 +1,13 @@
 
-export default function ProjectPage() {
+import ProjectDashboard from "@/src/components/ui/org/project/dashboard";
+
+type Params = { organisationSlug: string; projectSlug: string };
+
+export default async function ProjectPage({ params }: { params: Promise<Params> }) {
+
+    const { organisationSlug, projectSlug } = await params;
+
     return (
-        <div>
-            <h1>Project Page</h1>
-        </div>
+        <ProjectDashboard organisationSlug={organisationSlug} projectSlug={projectSlug} />
     )
 }
