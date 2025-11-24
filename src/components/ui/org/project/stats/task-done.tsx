@@ -54,7 +54,6 @@ export default function ChartTaskDoneChartBarActive({
 
                 const data = await res.json()
                 const tasks: { completedAt: string }[] = data.tasks ?? []
-                const start = new Date(data.start)
 
                 const today = new Date()
                 today.setHours(0, 0, 0, 0)

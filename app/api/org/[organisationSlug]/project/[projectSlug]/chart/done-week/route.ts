@@ -3,7 +3,6 @@ import { prisma } from "@/src/lib/prisma"
 import { TaskStatus } from "@prisma/client"
 
 type Params = {
-  organisationSlug: string
   projectSlug: string
 }
 
@@ -18,10 +17,10 @@ function getLast7DaysRange() {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Params }
+  { params }: { params: Promise<Params> }
 ) {
   try {
-    const { organisationSlug, projectSlug } = await params
+    const { projectSlug } = await params
     const { start, end } = getLast7DaysRange()
 
     const tasks = await prisma.task.findMany({

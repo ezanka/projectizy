@@ -1,13 +1,11 @@
 "use client"
 
 import React from "react"
-import { TrendingUp } from "lucide-react"
-import { Bar, BarChart, CartesianGrid, Rectangle, XAxis } from "recharts"
+import { Bar, BarChart, CartesianGrid, Rectangle, RectangleProps, XAxis } from "recharts"
 
 import {
     Card,
     CardContent,
-    CardDescription,
     CardFooter,
     CardHeader,
     CardTitle,
@@ -16,7 +14,6 @@ import {
     ChartConfig,
     ChartContainer,
     ChartTooltip,
-    ChartTooltipContent,
 } from "@/src/components/ui/shadcn/chart"
 
 export const description = "Bar chart des tâches par statut"
@@ -55,6 +52,10 @@ type ChartPoint = {
     status: keyof typeof chartConfig
     tasks: number
     fill: string
+}
+
+type ActiveBarProps = RectangleProps & {
+    payload: ChartPoint
 }
 
 export function ChartBarActive({
@@ -172,11 +173,11 @@ export function ChartBarActive({
                             dataKey="tasks"
                             strokeWidth={2}
                             radius={8}
-                            activeBar={(props: any) => (
+                            activeBar={(props: unknown) => (
                                 <Rectangle
-                                    {...props}
+                                    {...props as ActiveBarProps}
                                     fillOpacity={0.8}
-                                    stroke={props.payload.fill}
+                                    stroke={(props as ActiveBarProps).payload.fill}
                                     strokeDasharray={4}
                                     strokeDashoffset={4}
                                 />

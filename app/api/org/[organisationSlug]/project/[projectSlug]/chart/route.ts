@@ -3,14 +3,14 @@ import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
 import { TaskStatus } from "@prisma/client";
 
-type Params = { organisationSlug: string; projectSlug: string };
+type Params = { projectSlug: string };
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<Params> }
 ) {
     const user = await getUser();
-    const { organisationSlug, projectSlug } = await params;
+    const { projectSlug } = await params;
 
     if (!user) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
