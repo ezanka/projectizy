@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { TaskStatus } from "@prisma/client";
 
 type Params = { id: string };
 
@@ -26,6 +27,7 @@ export async function PUT(
                 ...(assignedTo !== undefined && { assignedTo }),
                 ...(deadline && { deadline: new Date(deadline) }),
                 ...(status && { status }),
+                ...(status === TaskStatus.DONE ? { completedAt: new Date() } : {}),
                 ...(priority && { priority }),
                 ...(type && { type }),
                 ...(typeof archived === "boolean" && { archived }),
