@@ -222,7 +222,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                                 >
                                                     {status === TaskStatus.TODO ? "à faire" :
                                                         status === TaskStatus.IN_PROGRESS ? "en cours" :
-                                                            status === TaskStatus.REVIEW ? "à vérifier" :
+                                                            status === TaskStatus.REVIEW ? "En revue" :
                                                                 status === TaskStatus.BLOCKED ? "Bloqué" :
                                                                     status === TaskStatus.DONE ? "Terminé" :
                                                                         status === TaskStatus.CANCELED ? "Annulé" : ""}

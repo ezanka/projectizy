@@ -522,7 +522,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                                             >
                                                 {status === TaskStatus.TODO ? "À faire" :
                                                     status === TaskStatus.IN_PROGRESS ? "En cours" :
-                                                        status === TaskStatus.REVIEW ? "À vérifier" :
+                                                        status === TaskStatus.REVIEW ? "En revue" :
                                                             status === TaskStatus.BLOCKED ? "Bloqué" :
                                                                 status === TaskStatus.DONE ? "Terminé" :
                                                                     status === TaskStatus.CANCELED ? "Annulé" : ""}

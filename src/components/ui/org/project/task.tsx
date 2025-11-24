@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { Archive, ArrowUpDown, Check, ChevronDown, Eye, ListChecks, ListRestart, PackageOpen, Pin, Plus, RefreshCw, User, UserCheck, X } from "lucide-react"
+import { Archive, ArrowUpDown, Check, ChevronDown, Circle, CircleCheckBig, CircleOff, Eye, ListChecks, ListRestart, PackageOpen, Pin, Plus, RefreshCw, ScanEye, ShieldBan, Timer, User, UserCheck, X } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
@@ -192,14 +192,15 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                 )
             },
             cell: ({ row }) => (
-                <div className="capitalize ml-4">{
-                    row.getValue("status") === TaskStatus.TODO ? "à faire" :
-                        row.getValue("status") === TaskStatus.IN_PROGRESS ? "en cours" :
-                            row.getValue("status") === TaskStatus.REVIEW ? "à vérifier" :
-                                row.getValue("status") === TaskStatus.BLOCKED ? "Bloqué" :
-                                    row.getValue("status") === TaskStatus.DONE ? "Terminé" :
-                                        row.getValue("status") === TaskStatus.CANCELED ? "Annulé" : ""
-                }</div>
+                <div className="capitalize ml-4">
+                    {row.getValue("status") === TaskStatus.TODO ? <div className="flex items-center gap-2"><Circle className="w-4" /> À faire</div> :
+                        row.getValue("status") === TaskStatus.IN_PROGRESS ? <div className="flex items-center gap-2"><Timer className="w-4" /> En cours</div> :
+                            row.getValue("status") === TaskStatus.REVIEW ? <div className="flex items-center gap-2"><ScanEye className="w-4" /> En revue</div> :
+                                row.getValue("status") === TaskStatus.DONE ? <div className="flex items-center gap-2"><CircleCheckBig className="w-4" /> Terminé</div> :
+                                    row.getValue("status") === TaskStatus.BLOCKED ? <div className="flex items-center gap-2"><ShieldBan className="w-4" /> Bloqué</div> :
+                                        row.getValue("status") === TaskStatus.CANCELED ? <div className="flex items-center gap-2"><CircleOff className="w-4" /> Annulé</div> :
+                                            "Non défini"}
+                </div>
             ),
         },
         {
@@ -386,7 +387,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                 const label =
                                     s === TaskStatus.TODO ? "À faire" :
                                         s === TaskStatus.IN_PROGRESS ? "En cours" :
-                                            s === TaskStatus.REVIEW ? "À vérifier" :
+                                            s === TaskStatus.REVIEW ? "En revue" :
                                                 s === TaskStatus.BLOCKED ? "Bloqué" :
                                                     s === TaskStatus.DONE ? "Terminé" :
                                                         s === TaskStatus.CANCELED ? "Annulé" : s
@@ -565,7 +566,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                                         <SelectItem key={status} value={status} className="capitalize">
                                                                             {status === TaskStatus.TODO ? "À faire" :
                                                                                 status === TaskStatus.IN_PROGRESS ? "En cours" :
-                                                                                    status === TaskStatus.REVIEW ? "À vérifier" :
+                                                                                    status === TaskStatus.REVIEW ? "En revue" :
                                                                                         status === TaskStatus.BLOCKED ? "Bloqué" :
                                                                                             status === TaskStatus.DONE ? "Terminé" :
                                                                                                 status === TaskStatus.CANCELED ? "Annulé" : ""}

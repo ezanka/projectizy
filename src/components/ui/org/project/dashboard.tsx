@@ -19,7 +19,7 @@ import {
     TableRow,
 } from "@/src/components/ui/shadcn/table"
 import { Button } from "@/src/components/ui/shadcn/button";
-import { ListPlus } from "lucide-react";
+import { ListPlus, Circle, Timer, ScanEye, CircleCheckBig, CircleOff, ShieldBan } from "lucide-react";
 
 type ProjectDashboardProps = {
     organisationSlug: string;
@@ -85,7 +85,7 @@ export default function ProjectDashboard({ organisationSlug, projectSlug }: Proj
                 const importantCount = data?.tasks?.filter((task: Task) => task.priority === TaskPriority.HIGH).length ?? 0;
                 const secondaryCount = data?.tasks?.filter((task: Task) => task.priority === TaskPriority.MEDIUM).length ?? 0;
 
-                const totalCount = data?.tasks?.length ?? 0;
+                const totalCount = data?.tasks?.filter((task: Task) => task.status !== TaskStatus.CANCELED).length ?? 0;
 
                 setTotalTaskCount(totalCount);
                 setDoneTaskCount(doneCount);
@@ -126,24 +126,18 @@ export default function ProjectDashboard({ organisationSlug, projectSlug }: Proj
                             {loading ? (
                                 <Skeleton className="h-4 w-48" />
                             ) : (
-                                <p className="text-sm text-muted-foreground">
+                                <div className="text-sm text-muted-foreground flex items-center gap-2">
                                     Statut du projet :{" "}
-                                    <span className="font-medium">
-                                        {projectData?.projectStatus === TaskStatus.TODO
-                                            ? "À faire"
-                                            : projectData?.projectStatus === TaskStatus.IN_PROGRESS
-                                                ? "En cours"
-                                                : projectData?.projectStatus === TaskStatus.REVIEW
-                                                    ? "En revue"
-                                                    : projectData?.projectStatus === TaskStatus.DONE
-                                                        ? "Terminé"
-                                                        : projectData?.projectStatus === TaskStatus.BLOCKED
-                                                            ? "Bloqué"
-                                                            : projectData?.projectStatus === TaskStatus.CANCELED
-                                                                ? "Annulé"
-                                                                : "Non défini"}
-                                    </span>
-                                </p>
+                                    <div className="font-medium">
+                                        {projectData?.projectStatus === TaskStatus.TODO ? <div className="flex items-center gap-2"><Circle className="w-4" /> À faire</div> :
+                                            projectData?.projectStatus === TaskStatus.IN_PROGRESS ? <div className="flex items-center gap-2"><Timer className="w-4" /> En cours</div> :
+                                                projectData?.projectStatus === TaskStatus.REVIEW ? <div className="flex items-center gap-2"><ScanEye className="w-4" /> En revue</div> :
+                                                    projectData?.projectStatus === TaskStatus.DONE ? <div className="flex items-center gap-2"><CircleCheckBig className="w-4" /> Terminé</div> :
+                                                        projectData?.projectStatus === TaskStatus.BLOCKED ? <div className="flex items-center gap-2"><ShieldBan className="w-4" /> Bloqué</div> :
+                                                            projectData?.projectStatus === TaskStatus.CANCELED ? <div className="flex items-center gap-2"><CircleOff className="w-4" /> Annulé</div> :
+                                                                "Non défini"}
+                                    </div>
+                                </div>
                             )}
                         </div>
 
@@ -371,12 +365,12 @@ export default function ProjectDashboard({ organisationSlug, projectSlug }: Proj
                                                 </TableCell>
                                                 <TableCell className="font-medium">{task.title}</TableCell>
                                                 <TableCell>
-                                                    {task.status === TaskStatus.TODO ? "À faire" :
-                                                        task.status === TaskStatus.IN_PROGRESS ? "En cours" :
-                                                            task.status === TaskStatus.REVIEW ? "En revue" :
-                                                                task.status === TaskStatus.DONE ? "Terminé" :
-                                                                    task.status === TaskStatus.BLOCKED ? "Bloqué" :
-                                                                        task.status === TaskStatus.CANCELED ? "Annulé" :
+                                                    {task.status === TaskStatus.TODO ? <div className="flex items-center gap-2"><Circle className="w-4" /> À faire</div> :
+                                                        task.status === TaskStatus.IN_PROGRESS ? <div className="flex items-center gap-2"><Timer className="w-4" /> En cours</div> :
+                                                            task.status === TaskStatus.REVIEW ? <div className="flex items-center gap-2"><ScanEye className="w-4" /> En revue</div> :
+                                                                task.status === TaskStatus.DONE ? <div className="flex items-center gap-2"><CircleCheckBig className="w-4" /> Terminé</div> :
+                                                                    task.status === TaskStatus.BLOCKED ? <div className="flex items-center gap-2"><ShieldBan className="w-4" /> Bloqué</div> :
+                                                                        task.status === TaskStatus.CANCELED ? <div className="flex items-center gap-2"><CircleOff className="w-4" /> Annulé</div> :
                                                                             "Non défini"}
                                                 </TableCell>
                                                 <TableCell className="text-right">{task.deadline ? new Date(task.deadline).toLocaleDateString() : "N/A"}</TableCell>
