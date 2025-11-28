@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, Plus, MoreHorizontal } from "lucide-react"
+import { ArrowUpDown, ChevronDown, Plus, MoreHorizontal, BookOpenText, User, ShieldUser, UserStar, UserRoundX } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
@@ -55,6 +55,8 @@ import {
     TooltipTrigger,
 } from "@/src/components/ui/shadcn/tooltip"
 import { Spinner } from "../../shadcn/spinner"
+import { MemberRole } from "@prisma/client";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "../../shadcn/select"
 
 export const columns = (
     adminUser: boolean,
@@ -116,7 +118,7 @@ export const columns = (
         {
             accessorKey: "role",
             header: "Rôle",
-            cell: ({ row }) => <div className="capitalize">{row.getValue("role")}</div>,
+            cell: ({ row }) => <div className="capitalize">{row.getValue("role") === MemberRole.VIEWER ? <div className="flex items-center gap-2"><BookOpenText className="w-4" /> Lecteur</div> : row.getValue("role") === MemberRole.MEMBER ? <div className="flex items-center gap-2"><User className="w-4" /> Membre</div> : row.getValue("role") === MemberRole.ADMIN ? <div className="flex items-center gap-2"><ShieldUser className="w-4" /> Administrateur</div> : row.getValue("role") === MemberRole.OWNER ? <div className="flex items-center gap-2"><UserStar className="w-4" /> Propriétaire</div> : <div className="flex items-center gap-2"><UserRoundX className="w-4" /> Indéfini</div>}</div>,
         },
         {
             id: "actions",
@@ -126,7 +128,7 @@ export const columns = (
                 const user = row.original
                 return (
                     <>
-                        {row.getValue("role") === "owner" ? (
+                        {row.getValue("role") === MemberRole.OWNER ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -189,6 +191,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
     const [invitatingLoading, setInvitatingLoading] = React.useState(false)
     const [email, setEmail] = React.useState("")
     const [user, setUser] = React.useState<UserBase | null>(null)
+    const [defaultRole, setDefaultRole] = React.useState<MemberRole>(MemberRole.VIEWER);
 
     React.useEffect(() => {
 
@@ -225,7 +228,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         fetchUser();
     }, [organizationSlug]);
 
-    const adminUser = user?.role === "admin" || user?.role === "owner";
+    const adminUser = user?.role === MemberRole.ADMIN || user?.role === MemberRole.OWNER;
 
     const removeMember = async (userId: string) => {
         try {
@@ -466,6 +469,25 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                         <Label htmlFor="email-1">Email</Label>
                                         <Input id="email-1" name="email" disabled={invitatingLoading} value={email} onChange={(e) => setEmail(e.target.value)} />
                                     </div>
+                                    <div className="grid gap-3">
+                                        <Label htmlFor="role">Rôle</Label>
+                                        <Select
+                                            onValueChange={(value) => setDefaultRole(value as MemberRole)}
+                                            defaultValue={defaultRole}
+                                            disabled={invitatingLoading}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Sélectionnez un rôle" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value={MemberRole.VIEWER}>Lecteur</SelectItem>
+                                                    <SelectItem value={MemberRole.MEMBER}>Membre</SelectItem>
+                                                    <SelectItem value={MemberRole.ADMIN}>Admin</SelectItem>
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
                                 <DialogFooter>
                                     <DialogClose disabled={invitatingLoading} asChild>
@@ -473,7 +495,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                     </DialogClose>
                                     <Button
                                         type="submit"
-                                        disabled={invitatingLoading}
+                                        disabled={invitatingLoading || !email}
                                         onClick={async (e) => {
                                             e.preventDefault();
                                             await inviteMember(email);

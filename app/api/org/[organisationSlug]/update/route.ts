@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { MemberRole } from "@prisma/client";
 
 type Params = { organisationSlug: string };
 
@@ -25,7 +26,7 @@ export async function PATCH(
             },
         });
 
-        if (!userRole || (userRole.role !== "owner" && userRole.role !== "admin")) {
+        if (!userRole || (userRole.role !== MemberRole.OWNER && userRole.role !== MemberRole.ADMIN)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { MemberRole } from "@prisma/client";
 
 export async function POST(req: Request) {
     try {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
                 type,
                 plan,
                 members: {
-                    create: { userId: user.id, role: "owner"}
+                    create: { userId: user.id, role: MemberRole.OWNER }
                 },
             },
         });

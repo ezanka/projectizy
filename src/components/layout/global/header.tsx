@@ -64,7 +64,7 @@ export default async function Header() {
                             <DropdownMenuLabel>Thème</DropdownMenuLabel>
                             <ThemeToggle />
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>
+                            <DropdownMenuItem asChild>
                                 <SignOut />
                             </DropdownMenuItem>
                         </DropdownMenuContent>

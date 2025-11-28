@@ -59,12 +59,13 @@ import {
     FormLabel,
     FormMessage,
 } from "@/src/components/ui/shadcn/form"
+import { TaskMemberRole, TaskMember } from "@prisma/client"
 
 const formSchema = z.object({
     taskName: z.string().min(2).max(50),
 })
 
-export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: { organisationSlug: string; projectSlug: string; id: string }) {
+export default function DetailsTaskForm({ organisationSlug, projectSlug, id, currentUserId }: { organisationSlug: string; projectSlug: string; id: string; currentUserId: string | undefined }) {
     const router = useRouter();
 
     const form = useForm<z.infer<typeof formSchema>>({
@@ -84,6 +85,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
         type?: TaskType | undefined;
         archived?: boolean;
         archiveAt?: Date | null;
+        role?: TaskMemberRole | null;
     };
 
     const [formData, setFormData] = React.useState<TaskForm>({
@@ -96,6 +98,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
         type: undefined,
         archived: false,
         archiveAt: null,
+        role: null,
     });
 
     const [subTasks, setSubTasks] = React.useState<Array<SubTask>>([]);
@@ -138,6 +141,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                     type: data.task.type,
                     archived: data.task.archived,
                     archiveAt: data.task.archiveAt ? new Date(new Date(data.task.archiveAt).toLocaleDateString()) : null,
+                    role: data.task.taskMembers.filter((task: TaskMember) => task.userId === currentUserId)[0]?.role || null,
                 });
                 setSubTasks(
                     (data.subTasks ?? [])
@@ -155,7 +159,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
         } catch (error) {
             console.error("Failed to fetch task details:", error);
         }
-    }, [organisationSlug, projectSlug, id]);
+    }, [organisationSlug, projectSlug, id, currentUserId]);
 
     async function updateTask(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -604,79 +608,83 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id }: {
                         </Field>
                     </FieldGroup>
                 </FieldSet>
-                <FieldSeparator />
-                <FieldSet>
-                    <FieldLegend>Danger zone</FieldLegend>
-                    <div className="flex items-center justify-between">
-                        <FieldDescription>
-                            Supprimer cette tâche de façon permanente. Cette action est irréversible.
-                        </FieldDescription>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button
-                                    variant="destructive"
-                                    type="button"
-                                    disabled={loadingTask}
-                                >
-                                    Supprimer la tâche
-                                </Button>
-                            </DialogTrigger>
+                {formData?.role === TaskMemberRole.ADMIN && (
+                    <>
+                        <FieldSeparator />
+                        <FieldSet>
+                            <FieldLegend>Danger zone</FieldLegend>
+                            <div className="flex items-center justify-between">
+                                <FieldDescription>
+                                    Supprimer cette tâche de façon permanente. Cette action est irréversible.
+                                </FieldDescription>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button
+                                            variant="destructive"
+                                            type="button"
+                                            disabled={loadingTask}
+                                        >
+                                            Supprimer la tâche
+                                        </Button>
+                                    </DialogTrigger>
 
-                            <DialogContent className="sm:max-w-[425px]">
-                                <Form {...form}>
-                                    <form>
-                                        <DialogHeader>
-                                            <DialogTitle>Confirmer la suppression de la tâche</DialogTitle>
-                                            <div className="flex items-center text-center gap-2 bg-accent px-4 py-2 rounded-md">
-                                                <span className="text-red-500"><TriangleAlert /></span>
-                                                <p>Cette action est irréversible.</p>
-                                            </div>
-                                            <DialogDescription className="mb-2">
-                                                Assurez-vous d&apos;avoir effectué une sauvegarde si vous souhaitez conserver vos données.
-                                            </DialogDescription>
-                                        </DialogHeader>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <Form {...form}>
+                                            <form>
+                                                <DialogHeader>
+                                                    <DialogTitle>Confirmer la suppression de la tâche</DialogTitle>
+                                                    <div className="flex items-center text-center gap-2 bg-accent px-4 py-2 rounded-md">
+                                                        <span className="text-red-500"><TriangleAlert /></span>
+                                                        <p>Cette action est irréversible.</p>
+                                                    </div>
+                                                    <DialogDescription className="mb-2">
+                                                        Assurez-vous d&apos;avoir effectué une sauvegarde si vous souhaitez conserver vos données.
+                                                    </DialogDescription>
+                                                </DialogHeader>
 
-                                        <div className="grid gap-4 mb-4">
-                                            <div className="grid gap-3">
-                                                <FormField
-                                                    control={form.control}
-                                                    name="taskName"
-                                                    disabled={loadingDelete}
-                                                    render={({ field }) => (
-                                                        <FormItem>
-                                                            <FormLabel>
-                                                                Taper <span className="font-black">&apos;{formData.title}&apos;</span> pour confirmer
-                                                            </FormLabel>
-                                                            <FormControl>
-                                                                <Input placeholder="Taper le nom de la tâche" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                            </div>
-                                        </div>
+                                                <div className="grid gap-4 mb-4">
+                                                    <div className="grid gap-3">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="taskName"
+                                                            disabled={loadingDelete}
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel>
+                                                                        Taper <span className="font-black">&apos;{formData.title}&apos;</span> pour confirmer
+                                                                    </FormLabel>
+                                                                    <FormControl>
+                                                                        <Input placeholder="Taper le nom de la tâche" {...field} />
+                                                                    </FormControl>
+                                                                    <FormMessage />
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </div>
+                                                </div>
 
-                                        <DialogFooter>
-                                            <DialogClose asChild>
-                                                <Button type="button" variant="outline" disabled={loadingDelete}>Annuler</Button>
-                                            </DialogClose>
-                                            <Button onClick={form.handleSubmit(handleTaskDelete)} disabled={loadingDelete}>
-                                                {loadingDelete ? (
-                                                    <span className="inline-flex items-center gap-2">
-                                                        <Spinner className="h-4 w-4" /> Suppression en cours...
-                                                    </span>
-                                                ) : (
-                                                    "Supprimer la tâche"
-                                                )}
-                                            </Button>
-                                        </DialogFooter>
-                                    </form>
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-                </FieldSet>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button type="button" variant="outline" disabled={loadingDelete}>Annuler</Button>
+                                                    </DialogClose>
+                                                    <Button onClick={form.handleSubmit(handleTaskDelete)} disabled={loadingDelete}>
+                                                        {loadingDelete ? (
+                                                            <span className="inline-flex items-center gap-2">
+                                                                <Spinner className="h-4 w-4" /> Suppression en cours...
+                                                            </span>
+                                                        ) : (
+                                                            "Supprimer la tâche"
+                                                        )}
+                                                    </Button>
+                                                </DialogFooter>
+                                            </form>
+                                        </Form>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        </FieldSet>
+                    </>
+                )}
                 <FieldSeparator />
                 <Field orientation="horizontal" className="justify-end space-x-2">
                     <Button variant="outline" type="button" asChild>

@@ -25,7 +25,9 @@ export async function GET(
     }
 
     const tasks = await prisma.task.findMany({
-        where: { projectId: project.id },
+        where: { projectId: project.id, taskMembers: { some: { userId: user.id } } },
+        include: { taskMembers: true },
+        orderBy: { updatedAt: "desc" }
     });
 
     return NextResponse.json(tasks, { status: 200 });

@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { MemberRole } from "@prisma/client";
 
 type Params = { organisationSlug: string };
 
@@ -31,7 +32,7 @@ export async function POST(
             select: { role: true },
         });
 
-        if (role?.role === "owner") {
+        if (role?.role === MemberRole.OWNER) {
             return NextResponse.json({ error: "Un propriétaire minimum est requis" }, { status: 403 });
         }
 

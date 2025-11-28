@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { BadgeCheck, BadgeX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Spinner } from "@/src/components/ui/shadcn/spinner";
+import { MemberRole } from "@prisma/client";
 
 export default function ProjectNameSettings({ organisationSlug, projectSlug }: { organisationSlug: string, projectSlug: string }) {
 
@@ -41,7 +42,7 @@ export default function ProjectNameSettings({ organisationSlug, projectSlug }: {
                 const response = await fetch(`/api/org/${organisationSlug}/get-org-user`);
                 if (response.ok) {
                     const user = await response.json();
-                    if (user.id === user.id && (user.role === 'owner' || user.role === 'admin')) {
+                    if (user.id === user.id && (user.role === MemberRole.OWNER || user.role === MemberRole.ADMIN)) {
                         setAuthorized(true);
                     }
                 } else {

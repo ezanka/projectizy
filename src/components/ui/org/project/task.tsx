@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { Archive, ArrowUpDown, Check, ChevronDown, Circle, CircleCheckBig, CircleOff, Eye, ListChecks, ListRestart, PackageOpen, Pin, Plus, RefreshCw, ScanEye, ShieldBan, Timer, User, UserCheck, X } from "lucide-react"
+import { Archive, ArrowUpDown, Check, ChevronDown, Circle, CircleCheckBig, CircleOff, FolderCog, FolderEdit, FolderSearch, ListChecks, ListRestart, PackageOpen, Pin, Plus, RefreshCw, ScanEye, ShieldBan, Timer, User, UserCheck, X } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import {
@@ -68,8 +68,12 @@ import {
     SelectValue,
 } from "@/src/components/ui/shadcn/select"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
-import { User as UserType } from "@prisma/client"
+import { User as UserType, TaskMember, TaskMemberRole } from "@prisma/client"
 import { toast } from "sonner"
+
+export type TaskWithMembers = Task & {
+    taskMembers: TaskMember[];
+};
 
 export function TasksTable({ organizationSlug, projectSlug, user }: { organizationSlug: string, projectSlug: string, user: UserType | null }) {
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -79,7 +83,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
     const [columnFiltersStatus, setColumnFiltersStatus] = React.useState<TaskStatus[]>([])
     const [columnFiltersStatusOpen, setColumnFiltersStatusOpen] = React.useState<boolean>(false)
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-    const [data, setData] = React.useState<Task[]>([])
+    const [data, setData] = React.useState<TaskWithMembers[]>([])
     const [loading, setLoading] = React.useState(true)
     const [open, setOpen] = React.useState(false)
     const [date, setDate] = React.useState<Date | undefined>(undefined)
@@ -159,18 +163,31 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         };
     }
 
-    const columns: ColumnDef<Task>[] = [
+    const columns: ColumnDef<TaskWithMembers>[] = [
         {
             id: "details",
             enableHiding: false,
             header: "Détails",
             cell: ({ row }) => {
-                return (
-                    <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/${row.original.id}`} className="text-muted-foreground hover:text-primary">
-                        <Eye className="ml-3" />
-                    </Link>
+                const memberRole = row.original.taskMembers
+                    ?.find((m) => m.userId === user?.id)
+                    ?.role;
 
-                )
+                return (
+                    <Link
+                        href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/${row.original.id}`}
+                        className="text-muted-foreground hover:text-primary"
+                    >
+
+                        {memberRole === TaskMemberRole.ADMIN ? (
+                            <FolderCog className="ml-3" />
+                        ) : memberRole === TaskMemberRole.EDITOR ? (
+                            <FolderEdit className="ml-3" />
+                        ) : memberRole === TaskMemberRole.VIEWER && (
+                            <FolderSearch className="ml-3" />
+                        )}
+                    </Link>
+                );
             },
         },
         {
@@ -284,7 +301,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         setLoading(true);
         try {
             const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-tasks`);
-            const tasks = await response.json();
+            const tasks: TaskWithMembers[] = await response.json();
             setData(tasks);
         } catch (error) {
             console.error('Error fetching tasks:', error);
@@ -297,11 +314,13 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         const fetchData = async () => {
             setLoading(true);
             try {
-                const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-tasks`);
-                const tasks = await response.json();
+                const response = await fetch(
+                    `/api/org/${organizationSlug}/project/${projectSlug}/get-tasks`
+                );
+                const tasks: TaskWithMembers[] = await response.json();
                 setData(tasks);
             } catch (error) {
-                console.error('Error fetching tasks:', error);
+                console.error("Error fetching tasks:", error);
             } finally {
                 setLoading(false);
             }
@@ -310,7 +329,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         fetchData();
     }, [organizationSlug, projectSlug]);
 
-    const table = useReactTable({
+    const table = useReactTable<TaskWithMembers>({
         data,
         columns,
         onSortingChange: setSorting,

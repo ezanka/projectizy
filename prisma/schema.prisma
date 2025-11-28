@@ -20,6 +20,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   members      Member[]
+  taskMembers     TaskMember[]
   invitations  Invitation[]
   projects     Project[]
   tasks        Task[]
@@ -113,13 +114,20 @@ model Organization {
     @@map("organization")
 }
 
+enum MemberRole {
+    OWNER
+    ADMIN
+    MEMBER
+    VIEWER
+}
+
 model Member {
     id             String       @id @default(cuid())
     organizationId String
     organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
     userId         String
     user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-    role           String
+    role           MemberRole
     createdAt      DateTime     @default(now())
 
     @@map("member")
@@ -130,7 +138,7 @@ model Invitation {
     organizationId String
     organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
     email          String
-    role           String?
+    role           MemberRole?
     status         String
     expiresAt      DateTime
     inviterId      String
@@ -256,11 +264,30 @@ model Task {
     comments    Comment[]
     taskLogs    TaskLog[]
     subTasks    SubTask[]
+    taskMembers     TaskMember[]
 
     @@index([projectId])
     @@index([status, priority])
     @@index([dueAt])
     @@unique([projectId, slug], map: "task_project_slug_unique")
+}
+
+enum TaskMemberRole {
+    ADMIN
+    EDITOR
+    VIEWER
+}
+
+model TaskMember {
+    id             String       @id @default(cuid())
+    taskId String
+    task   Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+    userId         String
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role           TaskMemberRole
+    createdAt      DateTime     @default(now())
+
+    @@map("taskMember")
 }
 
 model TaskLog {

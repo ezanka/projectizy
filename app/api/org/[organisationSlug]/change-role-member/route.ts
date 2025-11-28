@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { MemberRole } from "@prisma/client";
 
 type Params = { organisationSlug: string };
 
@@ -31,7 +32,7 @@ export async function PATCH(
             select: { role: true },
         });
 
-        if (currentRole?.role === "owner") {
+        if (currentRole?.role === MemberRole.OWNER) {
             return NextResponse.json({ error: "Vous ne pouvez pas changer le rôle du propriétaire" }, { status: 403 });
         }
 

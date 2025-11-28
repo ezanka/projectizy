@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { MemberRole } from "@prisma/client";
 
 export async function PATCH(req: Request) {
     try {
@@ -39,7 +40,7 @@ export async function PATCH(req: Request) {
             data: {
                 organizationId: invitation.organizationId,
                 userId: user.id,
-                role: "member",
+                role: invitation.role || MemberRole.VIEWER,
             },
         });
 

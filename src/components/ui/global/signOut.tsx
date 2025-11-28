@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { BadgeCheck, BadgeX } from "lucide-react";
 import { useState } from "react";
 import { Spinner } from "../shadcn/spinner";
+import { Button } from "../shadcn/button";
 
 export default function SignOut() {
     const router = useRouter();
@@ -47,13 +48,13 @@ export default function SignOut() {
     return (
         <>
             {loading ? 
-                <button onClick={handleSignOut} disabled className="hover:cursor-pointer">
+                <button onClick={handleSignOut} disabled className="hover:cursor-pointer w-full flex justify-center items-center gap-2">
                     <Spinner /> Déconnexion en cours...
                 </button>
             :
-                <button onClick={handleSignOut} disabled={false} className="hover:cursor-pointer">
-                    Se déconnecter
-                </button>
+                <Button variant={"ghost"} onClick={handleSignOut} disabled={false} className="hover:cursor-pointer w-full flex justify-start">
+                    <span>Se déconnecter</span>
+                </Button>
             }
         </>
 

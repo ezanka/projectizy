@@ -19,6 +19,7 @@ import {
     SelectValue,
 } from "../../shadcn/select"
 import { WorkspaceType } from "@/src/types/workspace";
+import { MemberRole } from "@prisma/client";
 
 const workspaceTypes: WorkspaceType[] = ["company", "education", "personal", "other"];
 
@@ -53,7 +54,7 @@ export default function OrganizationNameSettings({ organisationSlug }: { organis
                 const response = await fetch(`/api/org/${organisationSlug}/get-org-user`);
                 if (response.ok) {
                     const user = await response.json();
-                    if (user.id === user.id && (user.role === 'owner' || user.role === 'admin')) {
+                    if (user.id === user.id && (user.role === MemberRole.OWNER || user.role === MemberRole.ADMIN)) {
                         setAuthorized(true);
                     }
                 } else {

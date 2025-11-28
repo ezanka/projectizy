@@ -30,6 +30,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/src/components/ui/shadcn/form"
+import { MemberRole } from "@prisma/client";
 
 const formSchema = z.object({
     organisationName: z.string().min(2).max(50),
@@ -69,7 +70,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                 const response = await fetch(`/api/org/${organisationSlug}/get-org-user`);
                 if (response.ok) {
                     const user = await response.json();
-                    if (user.id === user.id && (user.role === 'owner' || user.role === 'admin')) {
+                    if (user.id === user.id && (user.role === MemberRole.OWNER || user.role === MemberRole.ADMIN)) {
                         setAuthorized(true);
                     }
                 } else {

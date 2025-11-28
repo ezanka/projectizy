@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { MemberRole } from "@prisma/client";
 
 type Params = { organisationSlug: string };
 
@@ -10,7 +11,7 @@ export async function POST(
 ) {
     try {
         const body = await req.json();
-        const { email } = body ?? {};
+        const { email, defaultRole } = body ?? {};
         const user = await getUser();
         const { organisationSlug } = await params;
         
@@ -66,7 +67,7 @@ export async function POST(
         const created = await prisma.invitation.create({
             data: {
                 organizationId,
-                role: "member",
+                role: defaultRole || MemberRole.VIEWER,
                 email,
                 status: "pending",
                 inviterId: user.id,
