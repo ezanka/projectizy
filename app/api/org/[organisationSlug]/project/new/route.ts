@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/src/lib/prisma";
 import { getUser } from "@/src/lib/auth-server";
+import { ProjectMemberRole, MemberRole } from "@prisma/client";
 
 type Params = { organisationSlug: string };
 
@@ -41,6 +42,35 @@ export async function POST(
                 user: { connect: { id: user.id } },
             },
         });
+
+        await prisma.projectMember.create({
+            data: {
+                userId: user.id,
+                projectId: created.id,
+                role: ProjectMemberRole.OWNER,
+            },
+        });
+
+        const orgRole = await prisma.organization.findMany({
+            where: { slug: organisationSlug },
+            include: {
+                members: {
+                    select: { userId: true, role: true },
+                },
+            },
+        });
+
+        for (const member of orgRole[0]?.members || []) {
+            if (member.userId !== user.id) {
+                await prisma.projectMember.create({
+                    data: {
+                        userId: member.userId,
+                        projectId: created.id,
+                        role: member.role === MemberRole.VIEWER ? ProjectMemberRole.VIEWER : MemberRole.MEMBER ? ProjectMemberRole.EDITOR : MemberRole.ADMIN ? ProjectMemberRole.ADMIN : ProjectMemberRole.VIEWER,
+                    },
+                });
+            }
+        }
 
         return NextResponse.json(created, { status: 201 });
     } catch {

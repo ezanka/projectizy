@@ -47,15 +47,11 @@ export default function SignOut() {
 
     return (
         <>
-            {loading ? 
-                <button onClick={handleSignOut} disabled className="hover:cursor-pointer w-full flex justify-center items-center gap-2">
-                    <Spinner /> Déconnexion en cours...
-                </button>
-            :
-                <Button variant={"ghost"} onClick={handleSignOut} disabled={false} className="hover:cursor-pointer w-full flex justify-start">
-                    <span>Se déconnecter</span>
-                </Button>
-            }
+
+            <Button variant={"ghost"} onClick={handleSignOut} disabled={loading} className="hover:cursor-pointer w-full flex justify-start">
+                {loading ? <><Spinner /> Déconnexion en cours...</> : <span>Se déconnecter</span>}
+            </Button>
+
         </>
 
     );

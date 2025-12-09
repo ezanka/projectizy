@@ -59,7 +59,7 @@ import {
 } from "@/src/components/ui/shadcn/tooltip"
 import Link from "next/link"
 import useSWR from "swr";
-import { Task, TaskPriority, TaskStatus, TaskType } from "@prisma/client";
+import { ProjectMemberRole, Task, TaskPriority, TaskStatus, TaskType } from "@prisma/client";
 import {
     Select,
     SelectContent,
@@ -68,12 +68,9 @@ import {
     SelectValue,
 } from "@/src/components/ui/shadcn/select"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
-import { User as UserType, TaskMember, TaskMemberRole } from "@prisma/client"
+import { User as UserType } from "@prisma/client"
 import { toast } from "sonner"
-
-export type TaskWithMembers = Task & {
-    taskMembers: TaskMember[];
-};
+import { Spinner } from "../../shadcn/spinner"
 
 export function TasksTable({ organizationSlug, projectSlug, user }: { organizationSlug: string, projectSlug: string, user: UserType | null }) {
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -83,7 +80,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
     const [columnFiltersStatus, setColumnFiltersStatus] = React.useState<TaskStatus[]>([])
     const [columnFiltersStatusOpen, setColumnFiltersStatusOpen] = React.useState<boolean>(false)
     const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-    const [data, setData] = React.useState<TaskWithMembers[]>([])
+    const [data, setData] = React.useState<Task[]>([])
     const [loading, setLoading] = React.useState(true)
     const [open, setOpen] = React.useState(false)
     const [date, setDate] = React.useState<Date | undefined>(undefined)
@@ -96,6 +93,13 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
     const [deadline, setDeadline] = React.useState<Date | undefined>(undefined)
     const [archived, setArchived] = React.useState<boolean>(false)
     const [loadingSave, setLoadingSave] = React.useState<boolean>(false)
+
+    const [authorized, setAuthorized] = React.useState(false);
+    const [loadingAuth, setLoadingAuth] = React.useState(true);
+
+    type UserWithRole = UserType & { role?: ProjectMemberRole };
+
+    const [membersData, setMembersData] = React.useState<UserWithRole[]>([]);
 
     async function handleSave(e: React.FormEvent) {
         e.preventDefault()
@@ -149,6 +153,25 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         )
     }
 
+    React.useEffect(() => {
+
+        const fetchMembers = async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-project-users`);
+                const members = await response.json();
+                setMembersData(members);
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching members:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchMembers();
+
+    }, [organizationSlug, projectSlug]);
+
     const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
     function UseUserName(userId: string | null) {
@@ -163,15 +186,13 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         };
     }
 
-    const columns: ColumnDef<TaskWithMembers>[] = [
+    const columns: ColumnDef<Task>[] = [
         {
             id: "details",
             enableHiding: false,
             header: "Détails",
             cell: ({ row }) => {
-                const memberRole = row.original.taskMembers
-                    ?.find((m) => m.userId === user?.id)
-                    ?.role;
+                const memberRole = user ? membersData.find(m => m.id === user.id)?.role : null;
 
                 return (
                     <Link
@@ -179,11 +200,13 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                         className="text-muted-foreground hover:text-primary"
                     >
 
-                        {memberRole === TaskMemberRole.ADMIN ? (
+                        {memberRole === ProjectMemberRole.OWNER ? (
                             <FolderCog className="ml-3" />
-                        ) : memberRole === TaskMemberRole.EDITOR ? (
+                        ) : memberRole === ProjectMemberRole.ADMIN ? (
+                            <FolderCog className="ml-3" />
+                        ) : memberRole === ProjectMemberRole.EDITOR ? (
                             <FolderEdit className="ml-3" />
-                        ) : memberRole === TaskMemberRole.VIEWER && (
+                        ) : memberRole === ProjectMemberRole.VIEWER && (
                             <FolderSearch className="ml-3" />
                         )}
                     </Link>
@@ -301,7 +324,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         setLoading(true);
         try {
             const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-tasks`);
-            const tasks: TaskWithMembers[] = await response.json();
+            const tasks: Task[] = await response.json();
             setData(tasks);
         } catch (error) {
             console.error('Error fetching tasks:', error);
@@ -317,7 +340,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                 const response = await fetch(
                     `/api/org/${organizationSlug}/project/${projectSlug}/get-tasks`
                 );
-                const tasks: TaskWithMembers[] = await response.json();
+                const tasks: Task[] = await response.json();
                 setData(tasks);
             } catch (error) {
                 console.error("Error fetching tasks:", error);
@@ -329,7 +352,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         fetchData();
     }, [organizationSlug, projectSlug]);
 
-    const table = useReactTable<TaskWithMembers>({
+    const table = useReactTable<Task>({
         data,
         columns,
         onSortingChange: setSorting,
@@ -372,6 +395,32 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
         table.resetPageIndex();
         table.setSorting([{ id: "updatedAt", desc: true }]);
     }, [table]);
+
+    React.useEffect(() => {
+        const checkAuthorization = async () => {
+            try {
+                setLoadingAuth(true);
+                const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-project-user`);
+                if (response.ok) {
+                    const user = await response.json();
+                    const role = user.projectMembers[0]?.role;
+                    if (role === ProjectMemberRole.OWNER || role === ProjectMemberRole.ADMIN || role === ProjectMemberRole.EDITOR) {
+                        setAuthorized(true);
+                    } else if (role === ProjectMemberRole.VIEWER) {
+                        setAuthorized(false);
+                    }
+                } else {
+                    setAuthorized(false);
+                }
+            } catch (error) {
+                console.error("Error checking authorization:", error);
+            } finally {
+                setLoadingAuth(false);
+            }
+        };
+
+        checkAuthorization();
+    }, [organizationSlug, projectSlug]);
 
     return (
         <div className="w-full">
@@ -493,11 +542,14 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                     </DropdownMenu>
                     <Button
                         variant="outline"
-                        className="border-l-0 rounded-l-none"
-                        asChild
+                        disabled={!authorized}
                     >
-                        <Link href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/new`}>
-                            <Plus className="mr-2 h-4 w-4" />
+                        <Link className="flex items-center" href={`/dashboard/org/${organizationSlug}/project/${projectSlug}/tasks/new`}>
+                            {loadingAuth ? (
+                                <Spinner className="mr-2 h-4 w-4" />
+                            ) : (
+                                <Plus className="mr-2 h-4 w-4" />
+                            )}
                             Nouvelle tâche
                         </Link>
 
@@ -571,12 +623,12 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                                 value={title}
                                                                 onChange={(e) => setTitle(e.target.value)}
                                                                 className="w-full"
-                                                                disabled={loadingSave}
+                                                                disabled={loadingSave || !authorized}
                                                             />
                                                             <Label htmlFor="statut" className="px-1">
                                                                 Statut
                                                             </Label>
-                                                            <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)} disabled={loadingSave}>
+                                                            <Select value={status} onValueChange={(value) => setStatus(value as TaskStatus)} disabled={loadingSave || !authorized}>
                                                                 <SelectTrigger id="statut" className="w-full">
                                                                     <SelectValue placeholder="Statut" />
                                                                 </SelectTrigger>
@@ -596,7 +648,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                             <Label htmlFor="priority" className="px-1">
                                                                 Priorité
                                                             </Label>
-                                                            <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)} disabled={loadingSave}>
+                                                            <Select value={priority} onValueChange={(value) => setPriority(value as TaskPriority)} disabled={loadingSave || !authorized}>
                                                                 <SelectTrigger id="priority" className="w-full">
                                                                     <SelectValue placeholder="Priorité" />
                                                                 </SelectTrigger>
@@ -615,7 +667,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                             <Label htmlFor="type" className="px-1">
                                                                 Type
                                                             </Label>
-                                                            <Select value={type} onValueChange={(value) => setType(value as TaskType)} disabled={loadingSave}>
+                                                            <Select value={type} onValueChange={(value) => setType(value as TaskType)} disabled={loadingSave || !authorized}>
                                                                 <SelectTrigger id="type" className="w-full">
                                                                     <SelectValue placeholder="Type" />
                                                                 </SelectTrigger>
@@ -639,7 +691,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                                         variant="outline"
                                                                         id="date"
                                                                         className="justify-between font-normal"
-                                                                        disabled={loadingSave}
+                                                                        disabled={loadingSave || !authorized}
                                                                     >
                                                                         {deadline ? new Date(deadline).toLocaleDateString() : "Selectionner la date de fin"}
                                                                         <ChevronDownIcon />
@@ -665,14 +717,14 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                                                                 id="archived"
                                                                 checked={archived}
                                                                 onCheckedChange={(checked) => setArchived(!!checked)}
-                                                                disabled={loadingSave}
+                                                                disabled={loadingSave || !authorized}
                                                             />
                                                             <p className="text-muted-foreground text-xs">Les tâches archivées ne compteront plus dans la progression globale.</p>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <SheetFooter>
-                                                    <Button type="submit" disabled={loadingSave}>{loadingSave ? "Sauvegarde en cours..." : "Sauvegarder"}</Button>
+                                                    <Button type="submit" disabled={loadingSave || !authorized}>{loadingSave ? "Sauvegarde en cours..." : "Sauvegarder"}</Button>
                                                     <SheetClose asChild>
                                                         <Button variant="outline" disabled={loadingSave}>Fermer</Button>
                                                     </SheetClose>

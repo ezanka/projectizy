@@ -19,17 +19,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/src/components/ui/shadcn/select"
-import { MemberRole } from "@prisma/client"
+import { ProjectMemberRole } from "@prisma/client"
 
 type ActionsMenuProps = {
     userId: string
     userRole?: string
     onCopyId?: (id: string) => void
-    onRemove?: (id: string) => void
     onChangeRole?: (id: string, role: string) => void
 }
 
-export default function ActionsMenu({ userId, userRole, onCopyId, onRemove, onChangeRole }: ActionsMenuProps) {
+export default function ActionsMenu({ userId, userRole, onCopyId, onChangeRole }: ActionsMenuProps) {
     const [dialogOpen, setDialogOpen] = React.useState(false)
     const [role, setRole] = React.useState<string | undefined>(undefined);
 
@@ -55,9 +54,6 @@ export default function ActionsMenu({ userId, userRole, onCopyId, onRemove, onCh
                     <DropdownMenuItem onClick={() => setDialogOpen(true)}>
                         Changer le rôle
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onRemove?.(userId)}>
-                        Supprimer l&apos;utilisateur
-                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
 
@@ -67,7 +63,7 @@ export default function ActionsMenu({ userId, userRole, onCopyId, onRemove, onCh
                         <DialogTitle>Modifier les accès du membre</DialogTitle>
                     </DialogHeader>
                     <DialogDescription>
-                        Choisissez un nouveau rôle pour ce membre au sein de l&apos;organisation.
+                        Choisissez un nouveau rôle pour ce membre au sein du projet.
                     </DialogDescription>
                     <div className="grid gap-4">
                         <div className="grid gap-3">
@@ -78,9 +74,9 @@ export default function ActionsMenu({ userId, userRole, onCopyId, onRemove, onCh
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectItem value={MemberRole.ADMIN}>Administrateur</SelectItem>
-                                        <SelectItem value={MemberRole.MEMBER}>Membre</SelectItem>
-                                        <SelectItem value={MemberRole.VIEWER}>Lecteur</SelectItem>
+                                        <SelectItem value={ProjectMemberRole.ADMIN}>Administrateur</SelectItem>
+                                        <SelectItem value={ProjectMemberRole.EDITOR}>Editeur</SelectItem>
+                                        <SelectItem value={ProjectMemberRole.VIEWER}>Lecteur</SelectItem>
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>

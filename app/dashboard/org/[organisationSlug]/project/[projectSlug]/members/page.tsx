@@ -10,13 +10,14 @@ import {
     EmptyTitle,
 } from "@/src/components/ui/shadcn/empty"
 import Link from "next/link"
+import { ProjectMemberTable } from "@/src/components/ui/org/project/member/table"
 
 export default async function ProjectMembersPage({
     params,
 }: {
-    params: { organisationSlug: string }
+    params: { organisationSlug: string, projectSlug: string, id: string }
 }) {
-    const { organisationSlug } = await params
+    const { organisationSlug, projectSlug } = await params
 
     const workspaceType = await prisma.organization.findUnique({
         where: { slug: organisationSlug },
@@ -43,5 +44,9 @@ export default async function ProjectMembersPage({
                 </EmptyContent>
             </Empty>
         </div>
+    } else {
+        return (
+            <ProjectMemberTable organizationSlug={organisationSlug} projectSlug={projectSlug} />
+        )
     }
 }

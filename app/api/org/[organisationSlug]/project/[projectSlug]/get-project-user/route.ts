@@ -15,19 +15,21 @@ export async function GET(
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const project = await prisma.project.findFirst({
-        where: { slug: projectSlug },
-        select: { id: true }
+    const userData = await prisma.user.findUnique({
+        where: { 
+            id: user.id,
+            projectMembers: { 
+                some: { 
+                    project: { slug: projectSlug } 
+                } 
+            } 
+        },
+        include: {
+            projectMembers: {
+                where: { project: { slug: projectSlug } },
+            }
+        }
     });
 
-    if (!project) {
-        return NextResponse.json({ error: "Project not found" }, { status: 404 });
-    }
-
-    const tasks = await prisma.task.findMany({
-        where: { projectId: project.id },
-        orderBy: { updatedAt: "desc" }
-    });
-
-    return NextResponse.json(tasks, { status: 200 });
+    return NextResponse.json(userData, { status: 200 });
 }

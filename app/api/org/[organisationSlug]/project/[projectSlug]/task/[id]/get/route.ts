@@ -20,7 +20,6 @@ export async function GET(
             id: id,
             project: { slug: projectSlug }
         },
-        include: { taskMembers: true },
     });
 
     const subTasks = await prisma.subTask.findMany({

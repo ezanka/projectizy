@@ -1,6 +1,6 @@
 "use client"
 
-import { Settings, ChevronsRight, Folders, Users, LayoutDashboard, NotepadText, Github, Figma, ShieldUser, ChartSpline } from "lucide-react"
+import { Settings, ChevronsRight, Folders, Users, LayoutDashboard, NotepadText, Github, Figma, ChartSpline } from "lucide-react"
 import { useState } from "react"
 import {
     Sidebar,
@@ -97,14 +97,6 @@ export function ProjectSidebar() {
                                     <Link href={`/dashboard/org/${organisationSlug}/project/${projectSlug}/members`} title="Gestion des membres" aria-label="Gestion des membres">
                                         <Users />
                                         <span>Membres</span>
-                                    </Link>
-                                </SidebarMenuButton>
-                            </SidebarMenuItem>
-                            <SidebarMenuItem>
-                                <SidebarMenuButton asChild>
-                                    <Link href={`/dashboard/org/${organisationSlug}/project/${projectSlug}/roles`} title="Gestion des rôles" aria-label="Gestion des rôles">
-                                        <ShieldUser />
-                                        <span>Rôles</span>
                                     </Link>
                                 </SidebarMenuButton>
                             </SidebarMenuItem>

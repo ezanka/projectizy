@@ -42,7 +42,7 @@ import React from "react"
 import { BadgeX, ChevronDownIcon, GripVertical, Trash2, TriangleAlert } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { TaskPriority, TaskType, TaskStatus, SubTask } from "@prisma/client"
+import { TaskPriority, TaskType, TaskStatus, SubTask, ProjectMemberRole } from "@prisma/client"
 import { Label } from "@/src/components/ui/shadcn/label"
 import { Progress } from "@/src/components/ui/shadcn/progress"
 import { ReactSortable } from "react-sortablejs";
@@ -59,7 +59,6 @@ import {
     FormLabel,
     FormMessage,
 } from "@/src/components/ui/shadcn/form"
-import { TaskMemberRole, TaskMember } from "@prisma/client"
 
 const formSchema = z.object({
     taskName: z.string().min(2).max(50),
@@ -85,7 +84,6 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
         type?: TaskType | undefined;
         archived?: boolean;
         archiveAt?: Date | null;
-        role?: TaskMemberRole | null;
     };
 
     const [formData, setFormData] = React.useState<TaskForm>({
@@ -98,7 +96,6 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
         type: undefined,
         archived: false,
         archiveAt: null,
-        role: null,
     });
 
     const [subTasks, setSubTasks] = React.useState<Array<SubTask>>([]);
@@ -110,20 +107,56 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
     const [loadingTask, setLoadingTask] = React.useState<boolean>(true);
     const [loadingDelete, setLoadingDelete] = React.useState(false);
 
+    const [canEdit, setCanEdit] = React.useState<boolean>(false);
+    const [canDelete, setCanDelete] = React.useState<boolean>(false);
+
+    const [memberRole, setMemberRole] = React.useState<ProjectMemberRole | null>(null);
+
     React.useEffect(() => {
-        try {
-            setLoadingMembers(true);
-            const fetchMembers = async () => {
-                const response = await fetch(`/api/org/${organisationSlug}/get-org-users`);
+        const fetchMembers = async () => {
+            try {
+                setLoadingMembers(true);
+                const fetchMembers = async () => {
+                    const response = await fetch(`/api/org/${organisationSlug}/get-org-users`);
+                    const data = await response.json();
+                    setMembers(data);
+                    setLoadingMembers(false);
+                };
+                fetchMembers();
+            } catch (error) {
+                console.error("Failed to fetch members:", error);
+            }
+        };
+
+        fetchMembers();
+
+        const fetchUserRole = async () => {
+            try {
+                const response = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/get-project-user`);
                 const data = await response.json();
-                setMembers(data);
-                setLoadingMembers(false);
-            };
-            fetchMembers();
-        } catch (error) {
-            console.error("Failed to fetch members:", error);
-        }
-    }, [organisationSlug]);
+                setMemberRole(data.projectMembers[0]?.role);
+            } catch (error) {
+                console.error("Failed to fetch user role:", error);
+            }
+        };
+
+        fetchUserRole();
+    }, [organisationSlug, projectSlug]);
+
+    React.useEffect(() => {
+        if (!memberRole) return;
+
+        setCanEdit(
+            memberRole === ProjectMemberRole.EDITOR ||
+            memberRole === ProjectMemberRole.ADMIN ||
+            memberRole === ProjectMemberRole.OWNER
+        );
+
+        setCanDelete(
+            memberRole === ProjectMemberRole.OWNER ||
+            memberRole === ProjectMemberRole.ADMIN
+        );
+    }, [memberRole]);
 
     React.useEffect(() => {
         try {
@@ -141,7 +174,6 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                     type: data.task.type,
                     archived: data.task.archived,
                     archiveAt: data.task.archiveAt ? new Date(new Date(data.task.archiveAt).toLocaleDateString()) : null,
-                    role: data.task.taskMembers.filter((task: TaskMember) => task.userId === currentUserId)[0]?.role || null,
                 });
                 setSubTasks(
                     (data.subTasks ?? [])
@@ -345,6 +377,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                                 setSubTasks(reindexed);
                                             }}
                                             className="space-y-2"
+                                            disabled={!canEdit}
                                         >
                                             {subTasks.map((subTask) => (
                                                 <div className="w-full flex items-center justify-between gap-3 bg-accent px-2 rounded-md border" key={subTask.id}>
@@ -354,6 +387,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                                             id={`subtask-${subTask.id}`}
                                                             checked={subTask.done}
                                                             onCheckedChange={() => handleSubTaskChange(subTask.id)}
+                                                            disabled={!canEdit}
                                                         />
                                                         <Label
                                                             htmlFor={`subtask-${subTask.id}`}
@@ -362,7 +396,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                                             {subTask.title}
                                                         </Label>
                                                     </div>
-                                                    <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer w-fit" onClick={() => handleSubTaskDelete(subTask.id)}>
+                                                    <Button asChild variant="ghost" type="button" className="text-primary/80 hover:text-primary hover:cursor-pointer w-fit" onClick={() => handleSubTaskDelete(subTask.id)} disabled={!canEdit}>
                                                         <Trash2 width={96} height={96} />
                                                     </Button>
                                                 </div>
@@ -383,8 +417,9 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                     onChange={(e) =>
                                         setSubTaskTitle(e.target.value)
                                     }
+                                    disabled={!canEdit}
                                 />
-                                <Button type="button" disabled={!subTaskTitle} onClick={handleAddSubTask}>
+                                <Button type="button" disabled={!subTaskTitle || !canEdit} onClick={handleAddSubTask}>
                                     Ajouter une sous-tâche
                                 </Button>
                             </div>
@@ -405,9 +440,9 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 onChange={(e) =>
                                     setSubTaskTitle(e.target.value)
                                 }
-                                disabled
+                                disabled={!canEdit}
                             />
-                            <Button type="button" disabled onClick={handleAddSubTask}>
+                            <Button type="button" disabled={!canEdit} onClick={handleAddSubTask}>
                                 Ajouter une sous-tâche
                             </Button>
                         </div>
@@ -431,7 +466,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 onChange={(e) =>
                                     setFormData({ ...formData, title: e.target.value })
                                 }
-                                disabled={loadingTask}
+                                disabled={loadingTask || !canEdit}
                                 required
                             />
                         </Field>
@@ -446,7 +481,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 onChange={(e) =>
                                     setFormData({ ...formData, description: e.target.value })
                                 }
-                                disabled={loadingTask}
+                                disabled={loadingTask || !canEdit}
                                 className="resize-none"
                             />
                         </Field>
@@ -455,8 +490,8 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 <FieldLabel htmlFor="assigned-to">
                                     Assigner à
                                 </FieldLabel>
-                                <Select value={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })} disabled={loadingMembers}>
-                                    <SelectTrigger id="assigned-to" disabled={loadingMembers}>
+                                <Select value={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })} disabled={loadingMembers || !canEdit}>
+                                    <SelectTrigger id="assigned-to" disabled={loadingMembers || !canEdit}>
                                         <SelectValue placeholder="Assigner à un membre" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -488,7 +523,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                                 variant="outline"
                                                 id="date"
                                                 className="w-full justify-between font-normal"
-                                                disabled={loadingTask}
+                                                disabled={loadingTask || !canEdit}
                                             >
                                                 {formData.deadline ? formData.deadline.toLocaleDateString() : "Selectionner une date"}
                                                 <ChevronDownIcon />
@@ -513,7 +548,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 <FieldLabel htmlFor="status">
                                     Statut
                                 </FieldLabel>
-                                <Select value={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })} disabled={loadingTask}>
+                                <Select value={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })} disabled={loadingTask || !canEdit}>
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Sélectionner un statut" />
                                     </SelectTrigger>
@@ -539,7 +574,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 <FieldLabel htmlFor="priority">
                                     Priorité
                                 </FieldLabel>
-                                <Select value={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })} disabled={loadingTask}>
+                                <Select value={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })} disabled={loadingTask || !canEdit}>
                                     <SelectTrigger id="priority">
                                         <SelectValue placeholder="Sélectionner une priorité" />
                                     </SelectTrigger>
@@ -564,7 +599,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                 <FieldLabel htmlFor="type">
                                     Type
                                 </FieldLabel>
-                                <Select value={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })} disabled={loadingTask}>
+                                <Select value={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })} disabled={loadingTask || !canEdit}>
                                     <SelectTrigger id="type">
                                         <SelectValue placeholder="Sélectionner un type" />
                                     </SelectTrigger>
@@ -592,7 +627,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                                         id="archived"
                                         checked={archived}
                                         onCheckedChange={(checked) => setArchived(!!checked)}
-                                        disabled={loadingTask}
+                                        disabled={loadingTask || !canEdit}
                                     />
                                     <Label htmlFor="archived">
                                         Archiver cette tâche
@@ -608,7 +643,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                         </Field>
                     </FieldGroup>
                 </FieldSet>
-                {formData?.role === TaskMemberRole.ADMIN && (
+                {canDelete && (
                     <>
                         <FieldSeparator />
                         <FieldSet>
@@ -692,7 +727,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
                             Annuler
                         </Link>
                     </Button>
-                    <Button type="submit" disabled={loadingTask}>Sauvegarder la tâche</Button>
+                    <Button type="submit" disabled={loadingTask || !canEdit}>Sauvegarder la tâche</Button>
                 </Field>
             </FieldGroup>
         </form>

@@ -34,6 +34,8 @@ import {
 } from "@/src/components/ui/shadcn/table"
 import { ButtonGroup } from "@/src/components/ui/shadcn/button-group"
 import Link from "next/link"
+import { MemberRole } from "@prisma/client"
+import { Spinner } from "../../shadcn/spinner"
 
 export type Project = {
     id: string
@@ -91,6 +93,8 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
     const [data, setData] = React.useState<Project[]>([])
     const [loading, setLoading] = React.useState(true)
     const router = useRouter();
+    const [authorized, setAuthorized] = React.useState(false);
+    const [loadingAuth, setLoadingAuth] = React.useState(true);
 
     React.useEffect(() => {
 
@@ -108,6 +112,30 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
         };
 
         fetchData();
+
+        const checkAuthorization = async () => {
+            try {
+                setLoadingAuth(true);
+                const response = await fetch(`/api/org/${organizationSlug}/get-org-user`);
+                if (response.ok) {
+                    const user = await response.json();
+                    if (user.role === MemberRole.OWNER || user.role === MemberRole.ADMIN) {
+                        setAuthorized(true);
+                    } else if (user.role === MemberRole.MEMBER || user.role === MemberRole.VIEWER) {
+                        setAuthorized(false);
+                    }
+                } else {
+                    setAuthorized(false);
+                }
+            } catch (error) {
+                console.error("Error checking authorization:", error);
+            } finally {
+                setLoadingAuth(false);
+            }
+        };
+
+        checkAuthorization();
+
     }, [organizationSlug])
 
     const table = useReactTable({
@@ -169,12 +197,15 @@ export function ProjectTable({ organizationSlug }: { organizationSlug: string })
                             </DropdownMenuContent>
                         </DropdownMenu>
                         <Button
-                            variant="outline"
-                            className="border-l-0 rounded-l-none"
-                            asChild
+                            variant={"outline"}
+                            disabled={!authorized}
                         >
-                            <Link href={`/dashboard/new/${organizationSlug}`}>
-                                <Plus className="mr-2 h-4 w-4" />
+                            <Link className="flex items-center" href={`/dashboard/new/${organizationSlug}`}>
+                                {loadingAuth ? (
+                                    <Spinner className="mr-2 h-4 w-4" />
+                                ) : (
+                                    <Plus className="mr-2 h-4 w-4" />
+                                )}
                                 Nouveau projet
                             </Link>
 
