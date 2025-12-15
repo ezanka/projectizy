@@ -41,6 +41,7 @@ export async function GET() {
             createdAt: notification.organization.createdAt.toISOString(),
         } : null,
         inviterEmail: inviterEmails.shift() || null,
+        role: notification.role,
     }));
 
     return NextResponse.json(formattedNotifications, { status: 200 });

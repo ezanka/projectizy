@@ -1,3 +1,4 @@
+import { MemberRole } from "@prisma/client";
 
 export type Notification = {
     id: string;
@@ -13,4 +14,5 @@ export type Notification = {
         updatedAt: string;
     } | null;
     inviterEmail: string | null;
+    role: MemberRole;
 };

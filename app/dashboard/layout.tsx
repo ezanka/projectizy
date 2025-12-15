@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Header from "@/src/components/layout/global/header";
 import { SidebarProvider } from "@/src/components/ui/shadcn/sidebar";
 import { cookies } from "next/headers"
+import { OrgRefreshProvider } from "@/src/components/wrappers/acceptOrg";
 
 export default async function LogedLayout({
     children,
@@ -10,21 +11,23 @@ export default async function LogedLayout({
     children: React.ReactNode;
 }>) {
     const cookieStore = await cookies();
-    const cookie = cookieStore.get("sidebar_state")?.value 
+    const cookie = cookieStore.get("sidebar_state")?.value
     const defaultOpen = cookie ? cookie === "true" : false
 
     const user = await getUser();
 
     if (!user) {
         redirect('/');
-    } 
+    }
 
     return (
-        <SidebarProvider defaultOpen={defaultOpen}>              
-            <div className="flex calc(min-h-screen - 3rem) w-full flex-col bg-sidebar text-foreground mt-12">
-                <Header />
-                {children}
-            </div>
+        <SidebarProvider defaultOpen={defaultOpen}>
+            <OrgRefreshProvider>
+                <div className="flex calc(min-h-screen - 3rem) w-full flex-col bg-sidebar text-foreground mt-12">
+                    <Header />
+                    {children}
+                </div>
+            </OrgRefreshProvider>
         </SidebarProvider>
     )
 }

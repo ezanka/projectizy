@@ -6,26 +6,34 @@ import { Skeleton } from "@/src/components/ui/shadcn/skeleton";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/shadcn/card";
 import Link from "next/link";
 import { Button } from "@/src/components/ui/shadcn/button";
+import { useOrgRefresh } from "@/src/components/wrappers/acceptOrg";
 
 export default function OrgPage() {
     const [loading, setLoading] = useState(true);
     const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+    const { refreshKey } = useOrgRefresh()
+
+    const fetchWorkspaces = async () => {
+        try {
+            const res = await fetch("/api/org/get-org-workspaces")
+            const data: Workspace[] = await res.json()
+            setWorkspaces(data)
+        } catch (error) {
+            console.error("Failed to fetch workspaces:", error)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
         setLoading(true)
-        const fetchWorkspaces = async () => {
-            try {
-                const res = await fetch("/api/org/get-org-workspaces")
-                const data: Workspace[] = await res.json()
-                setWorkspaces(data)
-            } catch (error) {
-                console.error("Failed to fetch workspaces:", error)
-            } finally {
-                setLoading(false)
-            }
-        }
         fetchWorkspaces()
     }, [])
+
+    useEffect(() => {
+        setLoading(true)
+        fetchWorkspaces()
+    }, [refreshKey])
 
     return (
         <div className="p-8 max-w-6xl mx-auto w-full">
@@ -51,7 +59,7 @@ export default function OrgPage() {
                     </>
                 ) : (
                     workspaces.map((workspace) => (
-                        <Link key={workspace.id}href={`/dashboard/org/${workspace.slug}`} className="block h-full">
+                        <Link key={workspace.id} href={`/dashboard/org/${workspace.slug}`} className="block h-full">
                             <Card className="bg-accent hover:bg-accent/90 transition h-24">
                                 <CardHeader>
                                     <CardTitle className="text-md">{workspace.name}</CardTitle>

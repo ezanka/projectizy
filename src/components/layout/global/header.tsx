@@ -14,6 +14,7 @@ import SignOut from "../../ui/global/signOut";
 import { Inbox, Settings } from "lucide-react";
 import Link from "next/link";
 import Notifications from "./notifications";
+import { prisma } from "@/src/lib/prisma";
 
 export default async function Header() {
     const user = await getUser();
@@ -21,6 +22,14 @@ export default async function Header() {
     if (!user) {
         return null;
     }
+
+    const notificationCount = await prisma.invitation.count({
+        where: {
+            email: user.email,
+            status: "pending",
+            inviterId: { not: user.id },
+        },
+    });
 
     return (
         <header className="fixed top-0 left-0 right-0 w-full border-b bg-sidebar z-10">
@@ -31,8 +40,19 @@ export default async function Header() {
                 <div className="flex items-center">
                     <div className="rounded-full border mr-2">
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Inbox className="h-3 w-3 m-2 text-muted-foreground hover:text-foreground cursor-pointer" /></DropdownMenuTrigger>
-                            <DropdownMenuContent>
+                            <DropdownMenuTrigger asChild>
+                                <div className="relative">
+                                    <Inbox className="h-3 w-3 m-2 text-muted-foreground hover:text-foreground cursor-pointer" />
+                                    {notificationCount > 0 && (
+                                        <div className="absolute bottom-3 right-0">
+                                            <div className="bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center top-0 right-0 -mt-2 -mr-2">
+                                                {notificationCount}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="mr-2">
                                 <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <Notifications />
