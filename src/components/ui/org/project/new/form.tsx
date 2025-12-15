@@ -24,8 +24,9 @@ import { Input } from "@/src/components/ui/shadcn/input"
 import { Button } from "@/src/components/ui/shadcn/button"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Spinner } from "@/src/components/ui/shadcn/spinner"
+import { MemberRole } from "@prisma/client"
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -36,6 +37,33 @@ const formSchema = z.object({
 export function NewProjectForm({ organisationSlug }: { organisationSlug: string }) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+
+    const [authorized, setAuthorized] = useState(false)
+
+    useEffect(() => {
+        const checkAuthorization = async () => {
+            const res = await fetch(
+                `/api/org/${organisationSlug}/get-org-user`,
+                {
+                    method: "GET",
+                }
+            )
+            const data = await res.json()
+            if (res.ok) {
+                if (data.role === MemberRole.OWNER || data.role === MemberRole.ADMIN || data.role === MemberRole.MEMBER) {
+                    setAuthorized(true)
+                } else {
+                    setAuthorized(false)
+                    router.push(`/dashboard/org/${organisationSlug}/projects`)
+                }
+            } else {
+                setAuthorized(false)
+                router.push(`/dashboard/org/${organisationSlug}/projects`)
+            }
+        }
+
+        checkAuthorization()
+    }, [organisationSlug, router]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -78,7 +106,7 @@ export function NewProjectForm({ organisationSlug }: { organisationSlug: string 
                         <FormField
                             control={form.control}
                             name="name"
-                            disabled={isLoading}
+                            disabled={isLoading || !authorized}
                             render={({ field }) => (
                                 <FormItem className="w-full">
                                     <FormLabel>Nom</FormLabel>
@@ -99,7 +127,7 @@ export function NewProjectForm({ organisationSlug }: { organisationSlug: string 
                                 Annuler
                             </Link>
                         </Button>
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading || !authorized}>
                             {isLoading ? (
                                 <span className="inline-flex items-center gap-2">
                                     <Spinner className="h-4 w-4" /> Création en cours...

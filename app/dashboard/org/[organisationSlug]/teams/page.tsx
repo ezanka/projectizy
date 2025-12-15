@@ -49,8 +49,8 @@ export default async function OrganizationTeamsPage({
                 </EmptyHeader>
                 <EmptyContent>
                     <div className="flex gap-2">
-                        <Button><Link href="/dashboard/organizations">Changer d&apos;organisation</Link></Button>
-                        <Button variant="outline">Changer le type d&apos;organisation</Button>
+                        <Button asChild><Link href="/dashboard/organizations">Changer d&apos;organisation</Link></Button>
+                        <Button variant="outline" asChild><Link href="/dashboard/organizations">Changer le type d&apos;organisation</Link></Button>
                     </div>
                 </EmptyContent>
             </Empty>
@@ -75,8 +75,8 @@ export default async function OrganizationTeamsPage({
                     </EmptyHeader>
                     <EmptyContent>
                         <div className="flex gap-2">
-                            <Button><Link href={`/dashboard/org/${organisationSlug}`}>Voir les projets</Link></Button>
-                            <Button variant="outline"><Link href="/dashboard/organizations">Retourner aux organisations</Link></Button>
+                            <Button asChild><Link href={`/dashboard/org/${organisationSlug}`}>Voir les projets</Link></Button>
+                            <Button variant="outline" asChild><Link href="/dashboard/organizations">Retourner aux organisations</Link></Button>
                         </div>
                     </EmptyContent>
                 </Empty>

@@ -13,7 +13,7 @@ import {
     useReactTable,
     VisibilityState,
 } from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, Plus, MoreHorizontal, BookOpenText, ShieldUser, UserStar, UserRoundX, UserPen } from "lucide-react"
+import { ArrowUpDown, ChevronDown, MoreHorizontal, BookOpenText, ShieldUser, UserStar, UserRoundX, UserPen } from "lucide-react"
 
 import { Button } from "@/src/components/ui/shadcn/button"
 import { Checkbox } from "@/src/components/ui/shadcn/checkbox"
@@ -36,27 +36,9 @@ import {
 } from "@/src/components/ui/shadcn/table"
 import { ButtonGroup } from "@/src/components/ui/shadcn/button-group"
 import { UserBase } from "@/src/types/user"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-    DialogClose,
-    DialogFooter,
-} from "@/src/components/ui/shadcn/dialog"
-import { Label } from "@/src/components/ui/shadcn/label"
 import { toast } from "sonner"
 import { BadgeX, BadgeCheck } from "lucide-react"
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
-} from "@/src/components/ui/shadcn/tooltip"
-import { Spinner } from "@/src/components/ui/shadcn/spinner"
 import { ProjectMemberRole } from "@prisma/client";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/src/components/ui/shadcn/select"
 
 export const columns = (
     adminUser: boolean,
@@ -186,10 +168,7 @@ export function ProjectMemberTable({ organizationSlug, projectSlug }: { organiza
     const [rowSelection, setRowSelection] = React.useState({})
     const [data, setData] = React.useState<UserBase[]>([])
     const [loading, setLoading] = React.useState(true)
-    const [invitatingLoading, setInvitatingLoading] = React.useState(false)
-    const [email, setEmail] = React.useState("")
     const [user, setUser] = React.useState<UserBase | null>(null)
-    const [defaultRole, setDefaultRole] = React.useState<ProjectMemberRole>(ProjectMemberRole.VIEWER);
 
     React.useEffect(() => {
 
@@ -276,51 +255,6 @@ export function ProjectMemberTable({ organizationSlug, projectSlug }: { organiza
         }
     };
 
-    const inviteMember = async (email: string) => {
-        try {
-            setInvitatingLoading(true);
-            const response = await fetch(`/api/org/${organizationSlug}/invite-member`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            if (response.ok) {
-                setInvitatingLoading(false);
-                setEmail("");
-                toast.custom(() => (
-                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
-                        <div className="flex items-center gap-2">
-                            <BadgeCheck />
-                            <div>
-                                <div className="font-semibold">Invitation envoyée</div>
-                                <div className="text-sm opacity-90">L&apos;invitation a été envoyée avec succès.</div>
-                            </div>
-                        </div>
-                    </div>
-                ))
-            } else {
-                const errorData = await response.json();
-                toast.custom(() => (
-                    <div className="bg-background text-foreground p-4 rounded-2xl shadow-lg">
-                        <div className="flex items-center gap-2">
-                            <BadgeX />
-                            <div>
-                                <div className="font-semibold">Erreur lors de l&apos;envoi de l&apos;invitation</div>
-                                <div className="text-sm opacity-90">{errorData.error}</div>
-                            </div>
-                        </div>
-                    </div>
-                ))
-                setInvitatingLoading(false);
-            }
-        } catch (error) {
-            console.error('Error sending invitation:', error);
-        }
-    };
-
     const table = useReactTable({
         data,
         columns: columns(adminUser, changeRoleMember),
@@ -378,97 +312,6 @@ export function ProjectMemberTable({ organizationSlug, projectSlug }: { organiza
                                 })}
                         </DropdownMenuContent>
                     </DropdownMenu>
-                    <Dialog>
-                        <form>
-                            {adminUser ? (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <DialogTrigger asChild>
-                                            <Button variant={"outline"} className="rounded-l-none hover:bg-primary/80 transition-all cursor-pointer">
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Nouveau membre
-                                            </Button>
-                                        </DialogTrigger>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Ajouter un membre</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            ) : (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <span className="inline-flex">
-                                            <Button
-                                                disabled
-                                                variant={"outline"}
-                                                className="rounded-l-none transition-all cursor-not-allowed"
-                                            >
-                                                <Plus className="mr-2 h-4 w-4" />
-                                                Nouveau membre
-                                            </Button>
-                                        </span>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Rôle admin ou propriétaire requis.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            )}
-                            <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                    <DialogTitle>Inviter un membre</DialogTitle>
-                                    <DialogDescription>
-                                        Entrez l&apos;adresse e-mail du membre que vous souhaitez inviter.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4">
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="email-1">Email</Label>
-                                        <Input id="email-1" name="email" disabled={invitatingLoading} value={email} onChange={(e) => setEmail(e.target.value)} />
-                                    </div>
-                                    <div className="grid gap-3">
-                                        <Label htmlFor="role">Rôle</Label>
-                                        <Select
-                                            onValueChange={(value) => setDefaultRole(value as ProjectMemberRole)}
-                                            defaultValue={defaultRole}
-                                            disabled={invitatingLoading}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Sélectionnez un rôle" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    <SelectItem value={ProjectMemberRole.VIEWER}>Lecteur</SelectItem>
-                                                    <SelectItem value={ProjectMemberRole.EDITOR}>Editeur</SelectItem>
-                                                    <SelectItem value={ProjectMemberRole.ADMIN}>Admin</SelectItem>
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <DialogClose disabled={invitatingLoading} asChild>
-                                        <Button variant="outline">Retour</Button>
-                                    </DialogClose>
-                                    <Button
-                                        type="submit"
-                                        disabled={invitatingLoading || !email}
-                                        onClick={async (e) => {
-                                            e.preventDefault();
-                                            await inviteMember(email);
-                                        }}
-                                    >
-                                        {invitatingLoading ? (
-                                            <span className="inline-flex items-center gap-2">
-                                                <Spinner className="h-4 w-4" /> Invitation en cours...
-                                            </span>
-                                        ) : (
-                                            "Inviter"
-                                        )}
-                                    </Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </form>
-                    </Dialog>
                 </ButtonGroup>
             </div>
             <div className="overflow-hidden rounded-md border">

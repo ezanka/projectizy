@@ -31,7 +31,7 @@ import React from "react"
 import { ChevronDownIcon } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
-import { TaskPriority, TaskType, TaskStatus } from "@prisma/client"
+import { TaskPriority, TaskType, TaskStatus, ProjectMemberRole } from "@prisma/client"
 
 export default function NewTaskForm({ organisationSlug, projectSlug }: { organisationSlug: string; projectSlug: string }) {
     const router = useRouter();
@@ -60,6 +60,33 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
     const [loadingMembers, setLoadingMembers] = React.useState<boolean>(true);
 
     const [open, setOpen] = React.useState(false)
+
+    const [authorized, setAuthorized] = React.useState(false)
+
+    React.useEffect(() => {
+        const checkAuthorization = async () => {
+            const res = await fetch(
+                `/api/org/${organisationSlug}/project/${projectSlug}/get-project-user`,
+                {
+                    method: "GET",
+                }
+            )
+            const data = await res.json()
+            if (res.ok) {
+                if (data.role === ProjectMemberRole.OWNER || data.role === ProjectMemberRole.ADMIN || data.role === ProjectMemberRole.EDITOR) {
+                    setAuthorized(true)
+                } else {
+                    setAuthorized(false)
+                    router.push(`/dashboard/org/${organisationSlug}/project/${projectSlug}`)
+                }
+            } else {
+                setAuthorized(false)
+                router.push(`/dashboard/org/${organisationSlug}/project/${projectSlug}`)
+            }
+        }
+
+        checkAuthorization()
+    }, [organisationSlug, projectSlug, router]);
 
     React.useEffect(() => {
         try {
@@ -126,6 +153,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                     setFormData({ ...formData, title: e.target.value })
                                 }
                                 required
+                                disabled={!authorized}
                             />
                         </Field>
                         <Field>
@@ -140,6 +168,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                     setFormData({ ...formData, description: e.target.value })
                                 }
                                 className="resize-none"
+                                disabled={!authorized}
                             />
                         </Field>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -147,7 +176,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="assigned-to">
                                     Assigner à
                                 </FieldLabel>
-                                <Select defaultValue={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })}>
+                                <Select defaultValue={formData.assignedTo || undefined} onValueChange={(value) => setFormData({ ...formData, assignedTo: value || undefined })} disabled={!authorized}>
                                     <SelectTrigger id="assigned-to">
                                         <SelectValue placeholder="Assigner à un membre" />
                                     </SelectTrigger>
@@ -179,6 +208,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                                 variant="outline"
                                                 id="date"
                                                 className="w-full justify-between font-normal"
+                                                disabled={!authorized}
                                             >
                                                 {formData.deadline ? formData.deadline.toLocaleDateString() : "Selectionner une date"}
                                                 <ChevronDownIcon />
@@ -204,7 +234,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="status">
                                     Statut
                                 </FieldLabel>
-                                <Select defaultValue={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })}>
+                                <Select defaultValue={formData.status || undefined} onValueChange={(value) => setFormData({ ...formData, status: value ? (value as TaskStatus) : undefined })} disabled={!authorized}>
                                     <SelectTrigger id="status">
                                         <SelectValue placeholder="Sélectionner un statut" />
                                     </SelectTrigger>
@@ -235,7 +265,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="priority">
                                     Priorité
                                 </FieldLabel>
-                                <Select defaultValue={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })}>
+                                <Select defaultValue={formData.priority || undefined} onValueChange={(value) => setFormData({ ...formData, priority: value ? (value as TaskPriority) : undefined })} disabled={!authorized}>
                                     <SelectTrigger id="priority">
                                         <SelectValue placeholder="Sélectionner une priorité" />
                                     </SelectTrigger>
@@ -265,7 +295,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                                 <FieldLabel htmlFor="type">
                                     Type
                                 </FieldLabel>
-                                <Select defaultValue={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })}>
+                                <Select defaultValue={formData.type || undefined} onValueChange={(value) => setFormData({ ...formData, type: value ? (value as TaskType) : undefined })} disabled={!authorized}>
                                     <SelectTrigger id="type">
                                         <SelectValue placeholder="Sélectionner un type" />
                                     </SelectTrigger>
@@ -300,7 +330,7 @@ export default function NewTaskForm({ organisationSlug, projectSlug }: { organis
                             Annuler
                         </Link>
                     </Button>
-                    <Button type="submit">Créer la tâche</Button>
+                    <Button type="submit" disabled={!authorized}>Créer la tâche</Button>
                 </Field>
             </FieldGroup >
         </form >

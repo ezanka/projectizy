@@ -25,6 +25,7 @@ import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
 import { Spinner } from "@/src/components/ui/shadcn/spinner";
 import React from "react";
+import { ProjectMemberRole } from "@prisma/client";
 
 const formSchema = z.object({
     owner: z.string().min(2).max(50),
@@ -35,6 +36,31 @@ const formSchema = z.object({
 export default function ProjectIntegrationGithubConfig({ organisationSlug, projectSlug, providerUrl }: { organisationSlug: string, projectSlug: string, providerUrl: string }) {
     const router = useRouter();
     const [isLoading, setIsLoading] = React.useState(false);
+
+    const [authorized, setAuthorized] = React.useState(false)
+
+    React.useEffect(() => {
+        const checkAuthorization = async () => {
+            const res = await fetch(
+                `/api/org/${organisationSlug}/project/${projectSlug}/get-project-user`,
+                {
+                    method: "GET",
+                }
+            )
+            const data = await res.json()
+            if (res.ok) {
+                if (data.role === ProjectMemberRole.OWNER || data.role === ProjectMemberRole.ADMIN || data.role === ProjectMemberRole.EDITOR) {
+                    setAuthorized(true)
+                } else {
+                    setAuthorized(false)
+                }
+            } else {
+                setAuthorized(false)
+            }
+        }
+
+        checkAuthorization()
+    }, [organisationSlug, projectSlug, router]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -104,6 +130,7 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                         <FormField
                             control={form.control}
                             name="owner"
+                            disabled={!authorized}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Owner</FormLabel>
@@ -120,6 +147,7 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                         <FormField
                             control={form.control}
                             name="repository"
+                            disabled={!authorized}
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Repository</FormLabel>
@@ -133,7 +161,7 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading || !authorized}>
                             {isLoading ? <><Spinner /><span>Configuration en cours...</span></> : "Configurer le dépôt"}
                         </Button>
                     </form>

@@ -320,7 +320,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
         }
     };
 
-    const inviteMember = async (email: string) => {
+    const inviteMember = async (email: string, defaultRole: MemberRole) => {
         try {
             setInvitatingLoading(true);
             const response = await fetch(`/api/org/${organizationSlug}/invite-member`, {
@@ -328,7 +328,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email, defaultRole }),
             });
 
             if (response.ok) {
@@ -498,7 +498,7 @@ export function OrgTeamTable({ organizationSlug }: { organizationSlug: string })
                                         disabled={invitatingLoading || !email}
                                         onClick={async (e) => {
                                             e.preventDefault();
-                                            await inviteMember(email);
+                                            await inviteMember(email, defaultRole);
                                         }}
                                     >
                                         {invitatingLoading ? (
