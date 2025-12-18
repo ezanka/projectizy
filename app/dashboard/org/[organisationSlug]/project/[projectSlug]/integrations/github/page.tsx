@@ -139,6 +139,7 @@ export default async function ProjectIntegrationGithubPage({ params }: { params:
         if (message.startsWith('docs')) return { color: 'bg-blue-100 text-blue-700 border-blue-200', label: 'Docs', icon: <GitCommit className="w-3.5 h-3.5" /> };
         if (message.startsWith('refactor')) return { color: 'bg-purple-100 text-purple-700 border-purple-200', label: 'Refactor', icon: <GitCommit className="w-3.5 h-3.5" /> };
         if (message.startsWith('test')) return { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', label: 'Test', icon: <GitCommit className="w-3.5 h-3.5" /> };
+        if (message.startsWith('style')) return { color: 'bg-amber-100 text-amber-700 border-amber-200', label: 'Style', icon: <GitCommit className="w-3.5 h-3.5" /> };
         return { color: 'bg-card text-muted-foreground border-muted-foreground', label: 'Commit', icon: <GitCommit className="w-3.5 h-3.5" /> };
     };
 

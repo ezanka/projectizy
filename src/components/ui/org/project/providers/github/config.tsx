@@ -49,7 +49,7 @@ export default function ProjectIntegrationGithubConfig({ organisationSlug, proje
             )
             const data = await res.json()
             if (res.ok) {
-                if (data.role === ProjectMemberRole.OWNER || data.role === ProjectMemberRole.ADMIN || data.role === ProjectMemberRole.EDITOR) {
+                if (data.userRole === ProjectMemberRole.OWNER || data.userRole === ProjectMemberRole.ADMIN || data.userRole === ProjectMemberRole.EDITOR) {
                     setAuthorized(true)
                 } else {
                     setAuthorized(false)

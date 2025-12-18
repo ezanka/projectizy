@@ -1,11 +1,16 @@
 
-import ProjectNameSettings from "@/src/components/ui/org/project/settings/name";
+import ProjectDeleteSettings from "@/src/components/ui/org/project/settings/delete";
+import ProjectNameSettings from "@/src/components/ui/org/project/settings/information";
 
-export default function ProjectSettingsPage() {
+type Params = { organisationSlug: string, projectSlug: string };
+
+export default async function ProjectSettingsPage({ params }: { params: Params }) {
+    const { organisationSlug, projectSlug } = await params;
+
     return (
-        <>
-            <div>Project Settings Page</div>
-            <ProjectNameSettings organisationSlug={"example-org"} projectSlug={"example-slug"} />
-        </>
+        <div className="space-y-4">
+            <ProjectNameSettings organisationSlug={organisationSlug} projectSlug={projectSlug} />
+            <ProjectDeleteSettings organisationSlug={organisationSlug} projectSlug={projectSlug} />
+        </div>
     );
 }

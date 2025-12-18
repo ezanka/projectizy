@@ -155,7 +155,7 @@ export default function OrganizationDangerZoneSettings({ organisationSlug }: { o
                 authorized ? (
                     <>
                         <CardContent className="flex flex-col gap-4">
-                            <p className="font-semibold text-primary">La suppression de ce projet supprimera également votre base de données.</p>
+                            <p className="font-semibold text-primary">La suppression de cette organisation supprimera également votre base de données.</p>
                             <p className="text-muted-foreground">Assurez-vous d&apos;avoir effectué une sauvegarde si vous souhaitez conserver vos données</p>
                             <div className="flex items-center justify-end gap-2">
                                 <Dialog>

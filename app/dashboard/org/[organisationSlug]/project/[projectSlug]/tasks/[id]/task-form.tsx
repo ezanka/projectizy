@@ -134,7 +134,7 @@ export default function DetailsTaskForm({ organisationSlug, projectSlug, id, cur
             try {
                 const response = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/get-project-user`);
                 const data = await response.json();
-                setMemberRole(data.projectMembers[0]?.role);
+                setMemberRole(data.userRole);
             } catch (error) {
                 console.error("Failed to fetch user role:", error);
             }

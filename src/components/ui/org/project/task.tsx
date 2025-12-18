@@ -403,7 +403,7 @@ export function TasksTable({ organizationSlug, projectSlug, user }: { organizati
                 const response = await fetch(`/api/org/${organizationSlug}/project/${projectSlug}/get-project-user`);
                 if (response.ok) {
                     const user = await response.json();
-                    const role = user.projectMembers[0]?.role;
+                    const role = user.userRole;
                     if (role === ProjectMemberRole.OWNER || role === ProjectMemberRole.ADMIN || role === ProjectMemberRole.EDITOR) {
                         setAuthorized(true);
                     } else if (role === ProjectMemberRole.VIEWER) {

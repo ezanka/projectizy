@@ -31,5 +31,7 @@ export async function GET(
         }
     });
 
-    return NextResponse.json(userData, { status: 200 });
+    const userRole = userData?.projectMembers[0]?.role || null;
+
+    return NextResponse.json({ userData, userRole }, { status: 200 });
 }
