@@ -57,7 +57,6 @@ export default function ProjectNameSettings({ organisationSlug, projectSlug }: {
                 const response = await fetch(`/api/org/${organisationSlug}/project/${projectSlug}/get-project-user`);
                 if (response.ok) {
                     const user = await response.json();
-                    console.log("User role:", user.role);
                     if (user.id === user.id && (user.userRole === ProjectMemberRole.OWNER || user.userRole === ProjectMemberRole.ADMIN || user.userRole === ProjectMemberRole.EDITOR)) {
                         setAuthorized(true);
                     }
